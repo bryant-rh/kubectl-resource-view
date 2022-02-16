@@ -1,0 +1,28 @@
+project_name: kubectl-resource
+release:
+  github:
+    owner: bryant-rh
+    name: kubectl-resource
+builds:
+  - id: kubectl-resource
+    goos:
+    - linux
+    - windows
+    - darwin
+    goarch:
+    - amd64
+    - "386"
+    env:
+      - CGO_ENABLED=0
+      - GO111MODULE=on
+    main: cmd/plugin/main.go
+    ldflags: -s -w
+      -X github.com/bryant-rh/kubectl-resource/pkg/version.version=
+archives:
+  - id: kubectl-resource
+    builds:
+    - kubectl-resource
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+    - goos: windows
+      format: zip
