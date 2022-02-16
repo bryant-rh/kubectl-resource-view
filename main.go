@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/bryant-rh/kubectl-resource/cmd"
+	cmd "github.com/bryant-rh/kubectl-resource/cmd/kubectl-resource"
 	"github.com/bryant-rh/kubectl-resource/pkg/util"
 
 	"github.com/spf13/pflag"
