@@ -1,4 +1,4 @@
-module kubectl-resource
+module github.com/bryant-rh/kubectl-resource
 
 go 1.17
 

@@ -4,6 +4,7 @@ import (
 	//"context"
 	"errors"
 
+	"github.com/bryant-rh/kubectl-resource/pkg/kube"
 	"github.com/bryant-rh/kubectl-resource/pkg/writer"
 
 	"github.com/spf13/cobra"
@@ -17,7 +18,6 @@ import (
 	"k8s.io/kubectl/pkg/util"
 	"k8s.io/kubectl/pkg/util/i18n"
 	"k8s.io/kubectl/pkg/util/templates"
-
 
 	metricsclientset "k8s.io/metrics/pkg/client/clientset/versioned"
 )
