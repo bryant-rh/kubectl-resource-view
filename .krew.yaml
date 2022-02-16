@@ -23,23 +23,23 @@ spec:
       matchLabels:
         os: darwin
         arch: amd64
-    {{addURIAndSha "https://github.com/bryant-rh/kubectl-resource/releases/download/{{ .TagName }}/kubectl-resource{{ .TagName }}_darwin_amd64.tar.gz" .TagName }}
+    {{addURIAndSha "https://github.com/bryant-rh/kubectl-resource/releases/download/{{ .TagName }}/kubectl-resource_{{ .TagName }}_darwin_amd64.tar.gz" .TagName }}
     bin: kubectl-resource
   - selector:
       matchLabels:
         os: darwin
         arch: arm64
-    {{addURIAndSha "https://github.com/bryant-rh/kubectl-resource/releases/download/{{ .TagName }}/kubectl-resource{{ .TagName }}_darwin_arm64.tar.gz" .TagName }}
+    {{addURIAndSha "https://github.com/bryant-rh/kubectl-resource/releases/download/{{ .TagName }}/kubectl-resource_{{ .TagName }}_darwin_arm64.tar.gz" .TagName }}
     bin: kubectl-resource
   - selector:
       matchLabels:
         os: linux
         arch: amd64
-    {{addURIAndSha "https://github.com/bryant-rh/kubectl-resource/releases/download/{{ .TagName }}/kubectl-resource{{ .TagName }}_linux_amd64.tar.gz" .TagName }}
+    {{addURIAndSha "https://github.com/bryant-rh/kubectl-resource/releases/download/{{ .TagName }}/kubectl-resource_{{ .TagName }}_linux_amd64.tar.gz" .TagName }}
     bin: kubectl-resource
   - selector:
       matchLabels:
         os: windows
         arch: amd64
-    {{addURIAndSha "https://github.com/bryant-rh/kubectl-resource/releases/download/{{ .TagName }}/kubectl-resource{{ .TagName }}_windows_amd64.tar.gz" .TagName }}
+    {{addURIAndSha "https://github.com/bryant-rh/kubectl-resource/releases/download/{{ .TagName }}/kubectl-resource_{{ .TagName }}_windows_amd64.tar.gz" .TagName }}
     bin: kubectl-resource.exe
