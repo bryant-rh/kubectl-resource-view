@@ -1,0 +1,45 @@
+apiVersion: krew.googlecontainertools.github.com/v1alpha2
+kind: Plugin
+metadata:
+  name: resource
+spec:
+  version: {{ .TagName }}
+  homepage: https://github.com/bryant-rh/kubectl-resource
+  shortDescription: Display Resource (CPU/Memory/PodCount) Usage and Request and Limit.
+  description: |
+    This plugin Display Resource (CPU/Memory/PodCount) Usage and Request and Limit.
+		The resource command allows you to see the resource consumption for nodes or pods.
+		This command requires Metrics Server to be correctly configured and working on the server.
+  caveats: |
+    Usage:
+      kubectl-resource [flags] [options]
+      kubectl-resource [command]
+
+    Examples:
+      node        Display Resource (CPU/Memory/PodCount) usage of nodes
+      pod         Display Resource (CPU/Memory)          usage of pods
+  platforms:
+  - selector:
+      matchLabels:
+        os: darwin
+        arch: amd64
+    {{addURIAndSha "https://github.com/bryant-rh/kubectl-resource/releases/download/{{ .TagName }}/kubectl-resource{{ .TagName }}_darwin_amd64.tar.gz" .TagName }}
+    bin: kubectl-resource
+  - selector:
+      matchLabels:
+        os: darwin
+        arch: arm64
+    {{addURIAndSha "https://github.com/bryant-rh/kubectl-resource/releases/download/{{ .TagName }}/kubectl-resource{{ .TagName }}_darwin_arm64.tar.gz" .TagName }}
+    bin: kubectl-resource
+  - selector:
+      matchLabels:
+        os: linux
+        arch: amd64
+    {{addURIAndSha "https://github.com/bryant-rh/kubectl-resource/releases/download/{{ .TagName }}/kubectl-resource{{ .TagName }}_linux_amd64.tar.gz" .TagName }}
+    bin: kubectl-resource
+  - selector:
+      matchLabels:
+        os: windows
+        arch: amd64
+    {{addURIAndSha "https://github.com/bryant-rh/kubectl-resource/releases/download/{{ .TagName }}/kubectl-resource{{ .TagName }}_windows_amd64.tar.gz" .TagName }}
+    bin: kubectl-resource.exe
