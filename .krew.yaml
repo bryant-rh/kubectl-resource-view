@@ -8,8 +8,8 @@ spec:
   shortDescription: Display Resource (CPU/Memory/PodCount) Usage and Request and Limit.
   description: |
     This plugin Display Resource (CPU/Memory/PodCount) Usage and Request and Limit.
-		The resource command allows you to see the resource consumption for nodes or pods.
-		This command requires Metrics Server to be correctly configured and working on the server.
+    The resource command allows you to see the resource consumption for nodes or pods.
+    This command requires Metrics Server to be correctly configured and working on the server.
   caveats: |
     Usage:
       kubectl-resource [flags] [options]
