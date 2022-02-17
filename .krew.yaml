@@ -1,7 +1,7 @@
 apiVersion: krew.googlecontainertools.github.com/v1alpha2
 kind: Plugin
 metadata:
-  name: resource
+  name: resource-view
 spec:
   version: {{ .TagName }}
   homepage: https://github.com/bryant-rh/kubectl-resource-view
