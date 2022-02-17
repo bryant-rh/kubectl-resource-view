@@ -7,6 +7,9 @@ builds:
   binary: kubectl-resource
   env:
   - CGO_ENABLED=0
+  ldflags:
+  - -w
+  - -X github.com/bryant-rh/kubectl-resource/cmd/kubectl-resource.version={{.Version}}
   goos:
   - linux
   - darwin

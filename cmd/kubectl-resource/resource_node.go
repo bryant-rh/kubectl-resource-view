@@ -43,7 +43,7 @@ var (
 	ResourceNodeLong = templates.LongDesc(i18n.T(`
 		Display resource (CPU/Memory/PodCount) usage of nodes.
 
-		The resource-node command allows you to see the resource consumption of nodes.`))
+		The resource node command allows you to see the resource consumption of nodes.`))
 
 	ResourceNodeExample = templates.Examples(i18n.T(`
 		  # Show metrics for all nodes
