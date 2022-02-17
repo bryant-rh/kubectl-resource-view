@@ -25,7 +25,7 @@ func NodeWrite(data [][]string, resourceType string, outType bool) {
 		}
 		table.Render()
 	case resourceType == "pod":
-		table.SetHeader([]string{"NODE", "Pod Allocated", "Pod Capacity", "Pod(%)"})
+		table.SetHeader([]string{"NODE", "Pod Capacity", "Pod(%)"})
 		for _, i := range data {
 			table.Append(i)
 		}
@@ -33,7 +33,7 @@ func NodeWrite(data [][]string, resourceType string, outType bool) {
 	default:
 		table.SetHeader([]string{"NODE", "CPU USE", "CPU REQ", "CPU REQ(%)", "CPU LIM", "CPU LIM(%)", "CPU Capacity",
 			"MEM USE", "MEM REQ", "MEM REQ(%)", "MEM LIM", "MEM LIM(%)", "MEM Capacity",
-			"Pod Allocated", "Pod Capacity", "Pod(%)"})
+			"Pod Capacity", "Pod(%)"})
 		for _, i := range data {
 			table.Append(i)
 		}

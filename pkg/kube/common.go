@@ -63,6 +63,11 @@ func (r *CpuResource) String() string {
 	return fmt.Sprintf("%vm", r.MilliValue())
 }
 
+//podFormat
+func podFormat(a string, b string) string {
+	return fmt.Sprintf("%s/%s", a, b)
+}
+
 //intToString int转string
 func intToString(a int) string {
 	str := strconv.Itoa(a)

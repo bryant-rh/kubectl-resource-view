@@ -149,7 +149,7 @@ func (k *KubeClient) GetNodeResources(resourceName string, resourceType string, 
 				v.CPULimits.String(), float64ToString(v.CPULimitsFraction), v.CPUCapacity.String(),
 				v.MemoryUsages.String(), v.MemoryRequests.String(), ExceedsCompare(float64ToString(v.MemoryRequestsFraction)),
 				v.MemoryLimits.String(), float64ToString(v.MemoryLimitsFraction), v.MemoryCapacity.String(),
-				intToString(v.AllocatedPods), int64ToString(v.PodCapacity), ExceedsCompare(float64ToString(v.PodFraction)))
+				podFormat(intToString(v.AllocatedPods), int64ToString(v.PodCapacity)), ExceedsCompare(float64ToString(v.PodFraction)))
 		case CPUResources:
 			resource = append(resource, nodename,
 				v.CPUUsages.String(), v.CPURequests.String(), ExceedsCompare(float64ToString(v.CPURequestsFraction)),
@@ -160,7 +160,7 @@ func (k *KubeClient) GetNodeResources(resourceName string, resourceType string, 
 				v.MemoryLimits.String(), float64ToString(v.MemoryLimitsFraction), v.MemoryCapacity.String())
 		case PodResources:
 			resource = append(resource, nodename,
-				intToString(v.AllocatedPods), int64ToString(v.PodCapacity), ExceedsCompare(float64ToString(v.PodFraction)))
+				podFormat(intToString(v.AllocatedPods), int64ToString(v.PodCapacity)), ExceedsCompare(float64ToString(v.PodFraction)))
 		default:
 			return nil, errors.New("unexpected type")
 		}
