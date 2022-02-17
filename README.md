@@ -1,4 +1,4 @@
-# kubectl resource
+# kubectl resource-view
 A plugin to access Kubernetes resource requests, limits, and usage.
 
 Display Resource (CPU/Memory/PodCount) Usage and Request and Limit.
@@ -11,13 +11,13 @@ The resource command allows you to see the resource consumption for nodes or pod
 
 Use [krew](https://krew.sigs.k8s.io/) plugin manager to install:
 
-    kubectl krew install resource
-    kubectl resource --help
+    kubectl krew install resource-view
+    kubectl resource-view --help
 
 
 ## Usage
 ```bash
-$ kubectl resource -h  # or kubectl-resource -h
+$ kubectl resource-view -h  # or kubectl-resource-view -h
 Display Resource (CPU/Memory/PodCount) Usage and Request and Limit.
 
  The resource command allows you to see the resource consumption for nodes or pods.
@@ -25,8 +25,8 @@ Display Resource (CPU/Memory/PodCount) Usage and Request and Limit.
  This command requires Metrics Server to be correctly configured and working on the server.
 
 Usage:
-  kubectl-resource [flags] [options]
-  kubectl-resource [command]
+  kubectl-resource-view [flags] [options]
+  kubectl-resource-view [command]
 
 Examples:
   node        Display Resource (CPU/Memory/PodCount) usage of nodes
@@ -41,23 +41,23 @@ Available Commands:
 ```
 ### node
 ```bash
-$ kubectl resource node -h  # or kubectl-resource node -h
+$ kubectl resource-view node -h  # or kubectl-resource-view node -h
 Display resource (CPU/Memory/PodCount) usage of nodes.
 
  The resource-node command allows you to see the resource consumption of nodes.
 
 Usage:
-  kubectl-resource node [NAME | -l label]
+  kubectl-resource-view node [NAME | -l label]
 
 Aliases:
   node, nodes, no
 
 Examples:
   # Show metrics for all nodes
-  kubectl resource node
+  kubectl resource-view node
   
   # Show metrics for a given node
-  kubectl resource node NODE_NAME
+  kubectl resource-view node NODE_NAME
 
 Flags:
   -h, --help              help for node
@@ -70,7 +70,7 @@ Flags:
 
 ### pod
 ``` bash
-$ kubectl resource pod -h  # or kubectl-resource  pod -h
+$ kubectl resource-view pod -h  # or kubectl-resource-view  pod -h
 Display resource (CPU/Memory) usage of pods.
 
  The 'resource pod' command allows you to see the resource consumption of pods.
@@ -78,23 +78,23 @@ Display resource (CPU/Memory) usage of pods.
  Due to the metrics pipeline delay, they may be unavailable for a few minutes since pod creation.
 
 Usage:
-  kubectl-resource pod [NAME | -l label]
+  kubectl-resource-view pod [NAME | -l label]
 
 Aliases:
   pod, pods, po
 
 Examples:
   # Show metrics for all pods in the default namespace
-  kubectl resource pod
+  kubectl resource-view pod
   
   # Show metrics for all pods in the given namespace
-  kubectl resource pod --namespace=NAMESPACE
+  kubectl resource-view pod --namespace=NAMESPACE
   
   # Show metrics for a given pod and its containers
-  kubectl resource pod POD_NAME --containers
+  kubectl resource-view pod POD_NAME --containers
   
   # Show metrics for the pods defined by label name=myLabel
-  kubectl resource pod -l name=myLabel
+  kubectl resource-view pod -l name=myLabel
 
 Flags:
   -A, --all-namespaces          If present, list the requested object(s) across all namespaces. Namespace in current context is ignored even if specified with --namespace.

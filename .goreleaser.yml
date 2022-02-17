@@ -2,14 +2,14 @@ before:
   hooks:
   - go mod download
 builds:
-- id: kubectl-resource
+- id: kubectl-resource-view
   main: ./
-  binary: kubectl-resource
+  binary: kubectl-resource-view
   env:
   - CGO_ENABLED=0
   ldflags:
   - -w
-  - -X github.com/bryant-rh/kubectl-resource/cmd/kubectl-resource.version={{.Version}}
+  - -X github.com/bryant-rh/kubectl-resource-view/cmd/kubectl-resource-view.version={{.Version}}
   goos:
   - linux
   - darwin
@@ -23,7 +23,7 @@ builds:
 
 archives:
 - builds:
-  - kubectl-resource
+  - kubectl-resource-view
   name_template: "{{ .ProjectName }}_{{ .Tag }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
   wrap_in_directory: false
   format: tar.gz

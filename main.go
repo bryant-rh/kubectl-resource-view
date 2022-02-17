@@ -1,14 +1,14 @@
 package main
 
 import (
-	cmd "github.com/bryant-rh/kubectl-resource/cmd/kubectl-resource"
-	"github.com/bryant-rh/kubectl-resource/pkg/util"
+	cmd "github.com/bryant-rh/kubectl-resource-view/cmd/kubectl-resource-view"
+	"github.com/bryant-rh/kubectl-resource-view/pkg/util"
 
 	"github.com/spf13/pflag"
 )
 
 func init() {
-	flags := pflag.NewFlagSet("kubectl-resource", pflag.ExitOnError)
+	flags := pflag.NewFlagSet("kubectl-resource-view", pflag.ExitOnError)
 	pflag.CommandLine = flags
 }
 

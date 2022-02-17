@@ -4,8 +4,8 @@ import (
 	//"context"
 	"errors"
 
-	"github.com/bryant-rh/kubectl-resource/pkg/kube"
-	"github.com/bryant-rh/kubectl-resource/pkg/writer"
+	"github.com/bryant-rh/kubectl-resource-view/pkg/kube"
+	"github.com/bryant-rh/kubectl-resource-view/pkg/writer"
 
 	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/labels"
@@ -47,10 +47,10 @@ var (
 
 	ResourceNodeExample = templates.Examples(i18n.T(`
 		  # Show metrics for all nodes
-		  kubectl resource node
+		  kubectl resource-view node
 
 		  # Show metrics for a given node
-		  kubectl resource node NODE_NAME`))
+		  kubectl resource-view node NODE_NAME`))
 )
 
 func NewCmdResouceNode(f cmdutil.Factory, o *ResourceNodeOptions, streams genericclioptions.IOStreams) *cobra.Command {
@@ -75,20 +75,11 @@ func NewCmdResouceNode(f cmdutil.Factory, o *ResourceNodeOptions, streams generi
 		},
 		Aliases: []string{"nodes", "no"},
 	}
-	// fsets := cmd.PersistentFlags()
-	// cfgFlags := genericclioptions.NewConfigFlags(true)
-	// //cfgFlags := defaultConfigFlags
-	// cfgFlags.AddFlags(fsets)
-	// matchVersionFlags := cmdutil.NewMatchVersionFlags(cfgFlags)
-	// matchVersionFlags.AddFlags(fsets)
 
 	cmd.Flags().StringVarP(&o.Selector, "selector", "l", o.Selector, "Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)")
 	cmd.Flags().StringVarP(&o.ResourceType, "type", "t", o.ResourceType, "Type information hierarchically (default: All Type)[possible values: cpu, memory, pod]")
 	cmd.Flags().BoolVar(&o.NoFormat, "no-format", o.NoFormat, "If present, print output without format table")
 	cmd.Flags().StringVar(&o.SortBy, "sort-by", o.SortBy, "If non-empty, sort nodes list using specified field. The field can be either 'cpu' or 'memory' or ''.")
-	// cmd.Flags().BoolVar(&o.NoHeaders, "no-headers", o.NoHeaders, "If present, print output without headers")
-	// cmd.Flags().BoolVar(&o.UseProtocolBuffers, "use-protocol-buffers", o.UseProtocolBuffers, "Enables using protocol-buffers to access Metrics API.")
-	// cmd.Flags().BoolVar(&o.ShowCapacity, "show-capacity", o.ShowCapacity, "Print node resources based on Capacity instead of Allocatable(default) of the nodes.")
 
 	return cmd
 }

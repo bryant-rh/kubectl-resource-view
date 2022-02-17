@@ -1,13 +1,13 @@
 
-PKGROOT=github.com/bryant-rh/kubectl-resource
+PKGROOT=github.com/bryant-rh/kubectl-resource-view
 
-CMD=kubectl-resource
+CMD=kubectl-resource-view
 VERSION ?= $(shell git describe --abbrev=0 --tags 2>/dev/null || echo no-version)
 GIT_COMMIT := $(shell git rev-parse --short HEAD)
 
 OUTDIR=_output
 
-GOLDFLAGS=-w -X $(PKGROOT)/cmd/kubectl-resource.version=$(VERSION)
+GOLDFLAGS=-w -X $(PKGROOT)/cmd/kubectl-resource-view.version=$(VERSION)
 
 export GO111MODULE=on
 

@@ -4,7 +4,7 @@ metadata:
   name: resource
 spec:
   version: {{ .TagName }}
-  homepage: https://github.com/bryant-rh/kubectl-resource
+  homepage: https://github.com/bryant-rh/kubectl-resource-view
   shortDescription: Display Resource (CPU/Memory/PodCount) Usage and Request and Limit.
   description: |
     This plugin Display Resource (CPU/Memory/PodCount) Usage and Request and Limit.
@@ -12,8 +12,8 @@ spec:
     This command requires Metrics Server to be correctly configured and working on the server.
   caveats: |
     Usage:
-      kubectl-resource [flags] [options]
-      kubectl-resource [command]
+      kubectl-resource-view [flags] [options]
+      kubectl-resource-view [command]
 
     Examples:
       node        Display Resource (CPU/Memory/PodCount) usage of nodes
@@ -23,23 +23,23 @@ spec:
       matchLabels:
         os: darwin
         arch: amd64
-    {{addURIAndSha "https://github.com/bryant-rh/kubectl-resource/releases/download/{{ .TagName }}/kubectl-resource_{{ .TagName }}_darwin_amd64.tar.gz" .TagName }}
-    bin: kubectl-resource
+    {{addURIAndSha "https://github.com/bryant-rh/kubectl-resource-view/releases/download/{{ .TagName }}/kubectl-resource-view_{{ .TagName }}_darwin_amd64.tar.gz" .TagName }}
+    bin: kubectl-resource-view
   - selector:
       matchLabels:
         os: darwin
         arch: arm64
-    {{addURIAndSha "https://github.com/bryant-rh/kubectl-resource/releases/download/{{ .TagName }}/kubectl-resource_{{ .TagName }}_darwin_arm64.tar.gz" .TagName }}
-    bin: kubectl-resource
+    {{addURIAndSha "https://github.com/bryant-rh/kubectl-resource-view/releases/download/{{ .TagName }}/kubectl-resource-view_{{ .TagName }}_darwin_arm64.tar.gz" .TagName }}
+    bin: kubectl-resource-view
   - selector:
       matchLabels:
         os: linux
         arch: amd64
-    {{addURIAndSha "https://github.com/bryant-rh/kubectl-resource/releases/download/{{ .TagName }}/kubectl-resource_{{ .TagName }}_linux_amd64.tar.gz" .TagName }}
-    bin: kubectl-resource
+    {{addURIAndSha "https://github.com/bryant-rh/kubectl-resource-view/releases/download/{{ .TagName }}/kubectl-resource-view_{{ .TagName }}_linux_amd64.tar.gz" .TagName }}
+    bin: kubectl-resource-view
   - selector:
       matchLabels:
         os: windows
         arch: amd64
-    {{addURIAndSha "https://github.com/bryant-rh/kubectl-resource/releases/download/{{ .TagName }}/kubectl-resource_{{ .TagName }}_windows_amd64.tar.gz" .TagName }}
-    bin: kubectl-resource.exe
+    {{addURIAndSha "https://github.com/bryant-rh/kubectl-resource-view/releases/download/{{ .TagName }}/kubectl-resource-view_{{ .TagName }}_windows_amd64.tar.gz" .TagName }}
+    bin: kubectl-resource-view.exe

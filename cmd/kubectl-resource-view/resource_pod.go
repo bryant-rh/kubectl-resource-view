@@ -15,8 +15,8 @@ import (
 	"k8s.io/kubectl/pkg/util/templates"
 	metricsclientset "k8s.io/metrics/pkg/client/clientset/versioned"
 
-	"github.com/bryant-rh/kubectl-resource/pkg/kube"
-	"github.com/bryant-rh/kubectl-resource/pkg/writer"
+	"github.com/bryant-rh/kubectl-resource-view/pkg/kube"
+	"github.com/bryant-rh/kubectl-resource-view/pkg/writer"
 
 	"github.com/spf13/cobra"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
@@ -50,23 +50,23 @@ var (
 	resourcePodLong = templates.LongDesc(i18n.T(`
 		Display resource (CPU/Memory) usage of pods.
 
-		The 'resource pod' command allows you to see the resource consumption of pods.
+		The 'resource-view pod' command allows you to see the resource consumption of pods.
 
 		Due to the metrics pipeline delay, they may be unavailable for a few minutes
 		since pod creation.`))
 
 	resourcePodExample = templates.Examples(i18n.T(`
 		# Show metrics for all pods in the default namespace
-		kubectl resource pod
+		kubectl resource-view pod
 
 		# Show metrics for all pods in the given namespace
-		kubectl resource pod --namespace=NAMESPACE
+		kubectl resource-view pod --namespace=NAMESPACE
 
 		# Show metrics for a given pod and its containers
-		kubectl resource pod POD_NAME --containers
+		kubectl resource-view pod POD_NAME --containers
 
 		# Show metrics for the pods defined by label name=myLabel
-		kubectl resource pod -l name=myLabel`))
+		kubectl resource-view pod -l name=myLabel`))
 )
 
 func NewCmdResoucePod(f cmdutil.Factory, o *ResourcePodOptions, streams genericclioptions.IOStreams) *cobra.Command {

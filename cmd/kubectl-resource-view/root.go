@@ -54,7 +54,7 @@ func versionString() string {
 //NewCmdResource
 func NewCmdResource() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:                   "kubectl-resource [flags] [options]",
+		Use:                   "kubectl-resource-view [flags] [options]",
 		Version:               versionString(),
 		DisableFlagsInUseLine: true,
 		SilenceUsage:          true,

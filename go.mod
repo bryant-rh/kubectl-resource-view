@@ -1,4 +1,4 @@
-module github.com/bryant-rh/kubectl-resource
+module github.com/bryant-rh/kubectl-resource-view
 
 go 1.17
 
