@@ -120,41 +120,64 @@ Example (node):
 ![example Kubernetes node](assets/demo-node-1.png)
 
 Example (Only display one of the data of the cpu or memroy or pod):
+```bash
+-t  [cpu/memory/pod]
+```
 
 ![example Kubernetes node cpu or memroy or pod](assets/demo-node-2.png)
 
 Example (According to cpu use or memory use sort):
+```bash
+--sort-by  [cpu/memory]
+```
 
 ![example Kubernetes According to cpu use or memory use sort](assets/demo-node-3.png)
 
 Example (Support filtering by lable or by node name):
+```bash
+-l   key1=value1,key2=value2
+```
 
 ![example Kubernetes filtering by lable](assets/demo-node-4.png)
 ![example Kubernetes filtering by node name](assets/demo-node-5.png)
 
 
 Example (Support similar kubectl format display):
+```bash
+--no-format
+```
+
 ![example Kubernetes similar kubectl format display](assets/demo-node-6.png)
 
 ### pod
 
 Show aggregate resource requests and limits  and pods Capacity. This is the same information displayed by kubectl describe nodes but in a easier to view format.
 
-<font color="green">When the percentage of cpu request and memory request is greater than 90, it will be marked in yellow, and if it is greater than 95, it will be marked in red</font>
+<font color="green">When the percentage of cpu use percent and memory use percent is greater than 90, it will be marked in yellow, and if it is greater than 95, it will be marked in red</font>
 
 Example (pod):
 
 ![example Kubernetes pod](assets/demo-pod-1.png)
 
-Example (Only display one of the data of the cpu or memroy or pod):
+Example (Only display one of the data of the cpu or memroy):
+```bash
+-t  [cpu/memory]
+```
 
 ![example Kubernetes node cpu or memroy or pod](assets/demo-pod-7.png)
 
 Example (According to cpu use or memory use sort):
+```bash
+--sort-by  [cpu/memory]
+```
 
 ![example Kubernetes According to cpu use or memory use sort](assets/demo-pod-3.png)
 
 Example (Support filtering by lable or by pod name or namespace):
+```bash
+-l   key1=value1,key2=value2
+-n   namespace name
+```
 
 ![example Kubernetes filtering by lable](assets/demo-pod-2.png)
 ![example Kubernetes filtering by lable](assets/demo-pod-4.png)
@@ -162,6 +185,10 @@ Example (Support filtering by lable or by pod name or namespace):
 
 
 Example (Support similar kubectl format display):
+```bash
+--no-format
+```
+
 ![example Kubernetes similar kubectl format display](assets/demo-pod-6.png)
 
 ## License
