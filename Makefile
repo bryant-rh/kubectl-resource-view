@@ -1,29 +1,40 @@
 
+PKGROOT=github.com/bryant-rh/kubectl-resource
+
+CMD=kubectl-resource
+VERSION ?= $(shell git describe --abbrev=0 --tags 2>/dev/null || echo no-version)
+GIT_COMMIT := $(shell git rev-parse --short HEAD)
+
+OUTDIR=_output
+
+GOLDFLAGS=-w -X $(PKGROOT)/cmd/kubectl-resource.version=$(VERSION)
+
 export GO111MODULE=on
 
-.PHONY: test
-test:
-	go test ./pkg/... ./cmd/... -coverprofile cover.out
+.PHONY: build build-linux build-darwin build-windows install check clean
 
-.PHONY: bin
-bin: fmt vet
-	go build -o bin/kubectl-resource github.com/bryant-rh/kubectl-resource/cmd/plugin
+build:
+	CGO_ENABLED=0 \
+	go build -ldflags "$(GOLDFLAGS)" -o $(OUTDIR)/$(CMD)
 
-.PHONY: fmt
-fmt:
-	go fmt ./pkg/... ./cmd/...
+build-linux-amd64:
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 \
+	go build -ldflags "$(GOLDFLAGS)" -o $(OUTDIR)/$(CMD)_linux-amd64/$(CMD)
+	
+build-linux-arm64:
+	GOOS=linux GOARCH=arm64 CGO_ENABLED=0 \
+	go build -ldflags "$(GOLDFLAGS)" -o $(OUTDIR)/$(CMD)_linux-arm64/$(CMD)
 
-.PHONY: vet
-vet:
-	go vet ./pkg/... ./cmd/...
+build-darwin:
+	GOOS=darwin GOARCH=amd64 CGO_ENABLED=0 \
+	go build -ldflags "$(GOLDFLAGS)" -o $(OUTDIR)/$(CMD)_darwin-amd64/$(CMD)
 
-.PHONY: kubernetes-deps
-kubernetes-deps:
-	go get k8s.io/client-go@v11.0.0
-	go get k8s.io/api@kubernetes-1.14.0
-	go get k8s.io/apimachinery@kubernetes-1.14.0
-	go get k8s.io/cli-runtime@kubernetes-1.14.0
+build-windows:
+	GOOS=windows GOARCH=amd64 CGO_ENABLED=0 \
+	go build -ldflags "$(GOLDFLAGS)" -o $(OUTDIR)/$(CMD)_windows-amd64/$(CMD).exe
 
-.PHONY: setup
-setup:
-	make -C setup
+install:
+	CGO_ENABLED=0 go install -ldflags "$(GOLDFLAGS)"
+
+clean:
+	-rm -r $(OUTDIR)
