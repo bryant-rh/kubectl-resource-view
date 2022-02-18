@@ -9,7 +9,12 @@ The resource command allows you to see the resource consumption for nodes or pod
 
 ## Installation
 
-Use [krew](https://krew.sigs.k8s.io/) plugin manager to install:
+    go install github.com/bryant-rh/kubectl-resource-view@VERSION
+
+
+krew is submitting PR, and it is still being approved. After approval, it can be installed in the following way
+
+Use [krew](https://krew.sigs.k8s.io/) plugin manager to instal:
 
     kubectl krew install resource-view
     kubectl resource-view --help

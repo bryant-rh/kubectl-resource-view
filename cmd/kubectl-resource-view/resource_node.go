@@ -102,19 +102,10 @@ func (o *ResourceNodeOptions) Complete(f cmdutil.Factory, cmd *cobra.Command, ar
 	if err != nil {
 		return err
 	}
-	// if o.UseProtocolBuffers {
-	// 	config.ContentType = "application/vnd.kubernetes.protobuf"
-	// }
-	//o.MetricsClient, err = metricsclientset.NewForConfig(config)
 	o.Client, err = kube.NewClient(config)
 	if err != nil {
 		return err
 	}
-	//o.MetricsClient	= client
-
-	//o.NodeClient = clientset.CoreV1()
-
-	//o.Printer = metricsutil.NewTopCmdPrinter(o.Out)
 	return nil
 }
 

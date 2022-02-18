@@ -229,6 +229,7 @@ func getNodeAllocatedResources(node v1.Node, podList *v1.PodList, nodeMetricsLis
 		memoryLimits := NewMemoryResource(_memoryLimits.Value())
 		var podCapacity int64 = capacity.Pods().Value()
 		podFraction := calcPercentage(int64(len(podList.Items)), podCapacity)
+
 		return NodeAllocatedResources{
 			CPUResources{
 				CPUUsages:           cpuUsages,
