@@ -7,70 +7,86 @@ import (
 )
 
 //NodeWrite
-func NodeWrite(data [][]string, resourceType string, outType bool) {
+func NodeWrite(data [][]string, resourceType []string, outType bool) {
 	//var table *tablewriter.Table
 
 	table := table(outType)
-	switch {
-	case resourceType == "cpu":
-		table.SetHeader([]string{"NODE", "CPU USE", "CPU REQ", "CPU REQ(%)", "CPU LIM", "CPU LIM(%)", "CPU Capacity"})
-		for _, i := range data {
-			table.Append(i)
+	var header []string
+	header = append(header, "NODE")
+	for _, t := range resourceType {
+		switch {
+		case t == "cpu":
+			header = append(header,
+				"CPU USE", "CPU REQ", "CPU REQ(%)", "CPU LIM", "CPU LIM(%)",
+			)
+		case t == "memory":
+			header = append(header,
+				"MEM USE", "MEM REQ", "MEM REQ(%)", "MEM LIM", "MEM LIM(%)",
+			)
+		case t == "gpu":
+			header = append(header,
+				"NVIDIA/GPU REQ", "NVIDIA/GPU REQ(%)", "NVIDIA/GPU LIM", "NVIDIA/GPU LIM(%)",
+				"ALIYUN/GPU-MEM REQ", "ALIYUN/GPU-MEM REQ(%)", "ALIYUN/GPU-MEM LIM", "ALIYUN/GPU-MEM LIM(%)",
+			)
+		case t == "pod":
+			header = append(header,
+				"Pod Capacity", "Pod(%)",
+			)
+		default:
+			header = append(header,
+				"CPU USE", "CPU REQ", "CPU REQ(%)", "CPU LIM", "CPU LIM(%)",
+				"MEM USE", "MEM REQ", "MEM REQ(%)", "MEM LIM", "MEM LIM(%)",
+				"NVIDIA/GPU REQ", "NVIDIA/GPU REQ(%)", "NVIDIA/GPU LIM", "NVIDIA/GPU LIM(%)",
+				"ALIYUN/GPU-MEM REQ", "ALIYUN/GPU-MEM REQ(%)", "ALIYUN/GPU-MEM LIM", "ALIYUN/GPU-MEM LIM(%)",
+				"PodCount (%)",
+			)
 		}
-		table.Render()
-	case resourceType == "memory":
-		table.SetHeader([]string{"NODE", "MEM USE", "MEM REQ", "MEM REQ(%)", "MEM LIM", "MEM LIM(%)", "MEM Capacity"})
-		for _, i := range data {
-			table.Append(i)
-		}
-		table.Render()
-	case resourceType == "pod":
-		table.SetHeader([]string{"NODE", "Pod Capacity", "Pod(%)"})
-		for _, i := range data {
-			table.Append(i)
-		}
-		table.Render()
-	default:
-		table.SetHeader([]string{"NODE", "CPU USE", "CPU REQ", "CPU REQ(%)", "CPU LIM", "CPU LIM(%)", "CPU Capacity",
-			"MEM USE", "MEM REQ", "MEM REQ(%)", "MEM LIM", "MEM LIM(%)", "MEM Capacity",
-			"Pod Capacity", "Pod(%)"})
-		for _, i := range data {
-			table.Append(i)
-		}
-		table.Render()
 	}
+	table.SetHeader(header)
+	for _, i := range data {
+		table.Append(i)
+	}
+	table.Render()
 
 }
 
 //PodWrite
-func PodWrite(data [][]string, resourceType string, outType bool) {
+func PodWrite(data [][]string, resourceType []string, outType bool) {
 	//var table *tablewriter.Table
 
 	table := table(outType)
-	switch {
-	case resourceType == "cpu":
-		table.SetHeader([]string{"NAMESPACE", "POD NAME",
-			"CPU USE", "CPU USE(%)", "CPU REQ", "CPU LIM"})
-		for _, i := range data {
-			table.Append(i)
+	var header []string
+	header = append(header, "NAMESPACE", "POD NAME")
+
+	for _, t := range resourceType {
+		switch {
+		case t == "cpu":
+			header = append(header,
+				"CPU USE", "CPU USE(%)", "CPU REQ", "CPU LIM",
+			)
+		case t == "memory":
+			header = append(header,
+				"MEM USE", "MEM USE(%)", "MEM REQ", "MEM LIM",
+			)
+		case t == "gpu":
+			header = append(header,
+				"NVIDIA/GPU REQ", "NVIDIA/GPU LIM",
+				"ALIYUN/GPU-MEM REQ", "ALIYUN/GPU-MEM LIM",
+			)
+		default:
+			header = append(header,
+				"CPU USE ", "CPU USE(%)", "CPU REQ", "CPU LIM",
+				"MEM USE", "MEM USE(%)", "MEM REQ", "MEM LIM",
+				"NVIDIA/GPU REQ", "NVIDIA/GPU LIM",
+				"ALIYUN/GPU-MEM REQ", "ALIYUN/GPU-MEM LIM",
+			)
 		}
-		table.Render()
-	case resourceType == "memory":
-		table.SetHeader([]string{"NAMESPACE", "POD NAME",
-			"MEM USE", "MEM USE(%)", "MEM REQ", "MEM LIM"})
-		for _, i := range data {
-			table.Append(i)
-		}
-		table.Render()
-	default:
-		table.SetHeader([]string{"NAMESPACE", "POD NAME",
-			"CPU USE", "CPU USE(%)", "CPU REQ", "CPU LIM",
-			"MEM USE", "MEM USE(%)", "MEM REQ", "MEM LIM"})
-		for _, i := range data {
-			table.Append(i)
-		}
-		table.Render()
 	}
+	table.SetHeader(header)
+	for _, i := range data {
+		table.Append(i)
+	}
+	table.Render()
 
 }
 

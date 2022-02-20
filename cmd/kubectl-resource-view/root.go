@@ -15,26 +15,29 @@ import (
 const (
 	sortByCPU    = "cpu"
 	sortByMemory = "memory"
-	sortByPod    = "pod"
+)
+
+var (
+	nodeResourceType = []string{"cpu", "memory", "pod", "gpu"}
+	podResourceType  = []string{"cpu", "memory", "gpu"}
 )
 
 var (
 	// set values via build flags
-	ShowOptionFlag bool
-	version        string
+	version string
 	//commit                      string
 	supportedMetricsAPIVersions = []string{
 		"v1beta1",
 	}
 	topLong = templates.LongDesc(i18n.T(`
-		Display Resource (CPU/Memory/PodCount) Usage and Request and Limit.
+		Display Resource (cpu/memory/gpu/podcount) Usage and Request and Limit.
 
 		The resource command allows you to see the resource consumption for nodes or pods.
 
 		This command requires Metrics Server to be correctly configured and working on the server. `))
 	rolesumExample = templates.Examples(i18n.T(`
-	   node        Display Resource (CPU/Memory/PodCount) usage of nodes
-	   pod         Display Resource (CPU/Memory)          usage of pods`))
+	   node        Display Resource (cpu/memory/gpu/podcount) usage of nodes
+	   pod         Display Resource (cpu/memory/gpu)          usage of pods`))
 )
 
 func runHelp(cmd *cobra.Command, args []string) {
@@ -59,7 +62,7 @@ func NewCmdResource() *cobra.Command {
 		DisableFlagsInUseLine: true,
 		SilenceUsage:          true,
 		SilenceErrors:         true,
-		Short:                 i18n.T("Display resource (CPU/memory) usage"),
+		Short:                 i18n.T("Display resource (cpu/memory/gpu/podcount) usage"),
 		Long:                  topLong,
 		Example:               templates.Examples(rolesumExample),
 		Run: func(cmd *cobra.Command, args []string) {
@@ -101,4 +104,16 @@ func SupportedMetricsAPIVersionAvailable(discoveredAPIGroups *metav1.APIGroupLis
 		}
 	}
 	return false
+}
+
+//MapKeyInIntSlice
+func MapKeyInIntSlice(haystack []string, needle string) bool {
+	set := make(map[string]struct{})
+
+	for _, e := range haystack {
+		set[e] = struct{}{}
+	}
+
+	_, ok := set[needle]
+	return ok
 }

@@ -51,7 +51,7 @@ type MemoryResources struct {
 	MemoryCapacity *MemoryResource
 }
 
-// MemoryResources describes node allocated resources.
+// PodResources describes node allocated resources.
 type PodResources struct {
 	// AllocatedPods in number of currently allocated pods on the node.
 	AllocatedPods int `json:"allocatedPods"`
@@ -63,10 +63,46 @@ type PodResources struct {
 	PodFraction float64 `json:"podFraction"`
 }
 
+// GPUResources describes node allocated resources.
+type GPUResources struct {
+	// NvidiaGpuCountsRequests is a fraction of NvidiaGpuCountsRequests, that is allocated.
+	NvidiaGpuCountsRequests int64
+
+	// NvidiaGpuCountsRequestsFraction is a fraction of NvidiaGpuCountsRequests, that is allocated.
+	NvidiaGpuCountsRequestsFraction float64 `json:"NvidiaGpuCountsRequestsFraction"`
+
+	// NvidiaGpuCountsLimits is defined NvidiaGpuCounts limit.
+	NvidiaGpuCountsLimits int64
+
+	// NvidiaGpuCountsLimitsFraction is a fraction of defined NvidiaGpuCounts limit, can be over 100%, i.e.
+	// overcommitted.
+	NvidiaGpuCountsLimitsFraction float64 `json:"NvidiaGpuCountsLimitsFraction"`
+
+	// NvidiaGpuCountsCapacity is maximum number of pods, that can be allocated on the node.
+	NvidiaGpuCountsCapacity int64 `json:"nvidiaGpuCountsCapacity"`
+
+	// AliyunGpuMemRequests is a fraction of AliyunGpuMemRequests, that is allocated.
+	AliyunGpuMemRequests int64
+
+	// AliyunGpuMemRequestsFraction is a fraction of AliyunGpuMemRequests, that is allocated.
+	AliyunGpuMemRequestsFraction float64 `json:"aliyunGpuMemsRequestsFraction"`
+
+	// AliyunGpuMemLimits is defined AliyunGpuMem limit.
+	AliyunGpuMemLimits int64
+
+	// NvidiaGpuCountsLimitsFraction is a fraction of defined NvidiaGpuCounts limit, can be over 100%, i.e.
+	// overcommitted.
+	AliyunGpuMemLimitsFraction float64 `json:"aliyunGpuMemLimitsFraction"`
+
+	// AliyunGpuMemCapacity is maximum number of pods, that can be allocated on the node.
+	AliyunGpuMemCapacity int64 `json:"aliyunGpuMemCapacity"`
+}
+
 // NodeAllocatedResources describes node allocated resources.
 type NodeAllocatedResources struct {
 	CPUResources
 	MemoryResources
+	GPUResources
 	PodResources
 }
 
@@ -95,6 +131,18 @@ type PodAllocatedResources struct {
 
 	// MemoryLimits is defined memory limit.
 	MemoryLimits *MemoryResource
+
+	// NvidiaGpuCountsRequests is a fraction of NvidiaGpuCounts, that is allocated.
+	NvidiaGpuCountsRequests int64
+
+	// NvidiaGpuCountsLimits is defined NvidiaGpuCounts limit.
+	NvidiaGpuCountsLimits int64
+
+	// AliyunGpuMemRequests is a fraction of AliyunGpuMem, that is allocated.
+	AliyunGpuMemRequests int64
+
+	// AliyunGpuMemLimits is defined AliyunGpuMem limit.
+	AliyunGpuMemLimits int64
 }
 
 //NodeCapacity
@@ -143,7 +191,7 @@ func getPodMetrics(m *metricsapi.PodMetrics) v1.ResourceList {
 }
 
 //getNodeAllocatedResources https://github.com/kubernetes/dashboard/blob/d386ff60597b6eab0222f2c3c4aecf8e49b3014e/src/app/backend/resource/node/detail.go\#L171
-func getNodeAllocatedResources(node v1.Node, podList *v1.PodList, nodeMetricsList *metricsapi.NodeMetricsList, resourceType string) (interface{}, error) {
+func getNodeAllocatedResources(node v1.Node, podList *v1.PodList, nodeMetricsList *metricsapi.NodeMetricsList, resourceType string) (NodeAllocatedResources, error) {
 	reqs, limits := map[v1.ResourceName]resource.Quantity{}, map[v1.ResourceName]resource.Quantity{}
 
 	for _, pod := range podList.Items {
@@ -173,7 +221,7 @@ func getNodeAllocatedResources(node v1.Node, podList *v1.PodList, nodeMetricsLis
 	usageMetrics := nodeMetricsByNodeName[node.Name]
 
 	capacity := NodeCapacity(&node)
-
+	var nodeAllocatedResources = NodeAllocatedResources{}
 	switch {
 	case resourceType == "cpu":
 		_cpuRequests, _cpuLimits := reqs[v1.ResourceCPU], limits[v1.ResourceCPU]
@@ -183,14 +231,20 @@ func getNodeAllocatedResources(node v1.Node, podList *v1.PodList, nodeMetricsLis
 		cpuRequests := NewCpuResource(_cpuRequests.MilliValue())
 		cpuLimits := NewCpuResource(_cpuLimits.MilliValue())
 
-		return CPUResources{
-			CPUUsages:           cpuUsages,
-			CPURequests:         cpuRequests,
-			CPURequestsFraction: cpuRequests.calcPercentage(capacity.Cpu()),
-			CPULimits:           cpuLimits,
-			CPULimitsFraction:   cpuLimits.calcPercentage(capacity.Cpu()),
-			CPUCapacity:         NewCpuResource(capacity.Cpu().MilliValue()),
-		}, nil
+		nodeAllocatedResources = NodeAllocatedResources{
+			CPUResources{
+				CPUUsages:           cpuUsages,
+				CPURequests:         cpuRequests,
+				CPURequestsFraction: cpuRequests.calcPercentage(capacity.Cpu()),
+				CPULimits:           cpuLimits,
+				CPULimitsFraction:   cpuLimits.calcPercentage(capacity.Cpu()),
+				CPUCapacity:         NewCpuResource(capacity.Cpu().MilliValue()),
+			},
+			MemoryResources{},
+			GPUResources{},
+			PodResources{},
+		}
+
 	case resourceType == "memory":
 		_memoryRequests, _memoryLimits := reqs[v1.ResourceMemory], limits[v1.ResourceMemory]
 		_memoryUsages := usageMetrics.Usage.Memory().Value()
@@ -198,23 +252,60 @@ func getNodeAllocatedResources(node v1.Node, podList *v1.PodList, nodeMetricsLis
 		memoryUsages := NewMemoryResource(_memoryUsages)
 		memoryRequests := NewMemoryResource(_memoryRequests.Value())
 		memoryLimits := NewMemoryResource(_memoryLimits.Value())
-		return MemoryResources{
-			MemoryUsages:           memoryUsages,
-			MemoryRequests:         memoryRequests,
-			MemoryRequestsFraction: memoryRequests.calcPercentage(capacity.Memory()),
-			MemoryLimits:           memoryLimits,
-			MemoryLimitsFraction:   memoryLimits.calcPercentage(capacity.Memory()),
-			MemoryCapacity:         NewMemoryResource(capacity.Memory().MilliValue()),
-		}, nil
+		nodeAllocatedResources = NodeAllocatedResources{
+			CPUResources{},
+			MemoryResources{
+				MemoryUsages:           memoryUsages,
+				MemoryRequests:         memoryRequests,
+				MemoryRequestsFraction: memoryRequests.calcPercentage(capacity.Memory()),
+				MemoryLimits:           memoryLimits,
+				MemoryLimitsFraction:   memoryLimits.calcPercentage(capacity.Memory()),
+				MemoryCapacity:         NewMemoryResource(capacity.Memory().Value()),
+			},
+			GPUResources{},
+			PodResources{},
+		}
 	case resourceType == "pod":
-		//capacity := NodeCapacity(&node)
-		var podCapacity int64 = capacity.Pods().Value()
+		podCapacity := capacity.Pods().Value()
 		podFraction := calcPercentage(int64(len(podList.Items)), podCapacity)
-		return PodResources{
-			AllocatedPods: len(podList.Items),
-			PodCapacity:   podCapacity,
-			PodFraction:   podFraction,
-		}, nil
+		nodeAllocatedResources = NodeAllocatedResources{
+			CPUResources{},
+			MemoryResources{},
+			GPUResources{},
+			PodResources{
+				AllocatedPods: len(podList.Items),
+				PodCapacity:   podCapacity,
+				PodFraction:   podFraction,
+			},
+		}
+	case resourceType == "gpu":
+		_nvidiaGpuCountsRequests, _nvidiaGpuCountsLimits := reqs[ResourceNvidiaGpuCounts], limits[ResourceNvidiaGpuCounts]
+		nvidiaGpuCountsRequests := _nvidiaGpuCountsRequests.Value()
+		nvidiaGpuCountsLimits := _nvidiaGpuCountsLimits.Value()
+		nvidiaGpuCountsCapacity := NewGpuResource(ResourceNvidiaGpuCounts, &capacity).Value()
+
+		_aliyunGpuMemRequests, _aliyunGpuMemLimits := reqs[ResourceAliyunGpuMem], limits[ResourceAliyunGpuMem]
+		aliyunGpuMemRequests := _aliyunGpuMemRequests.Value()
+		aliyunGpuMemLimits := _aliyunGpuMemLimits.Value()
+		aliyunGpuMemCapacity := NewGpuResource(ResourceAliyunGpuMem, &capacity).Value()
+
+		nodeAllocatedResources = NodeAllocatedResources{
+			CPUResources{},
+			MemoryResources{},
+			GPUResources{
+				NvidiaGpuCountsRequests:         nvidiaGpuCountsRequests,
+				NvidiaGpuCountsRequestsFraction: calcPercentage(nvidiaGpuCountsRequests, nvidiaGpuCountsCapacity),
+				NvidiaGpuCountsLimits:           nvidiaGpuCountsLimits,
+				NvidiaGpuCountsLimitsFraction:   calcPercentage(nvidiaGpuCountsLimits, nvidiaGpuCountsCapacity),
+				NvidiaGpuCountsCapacity:         nvidiaGpuCountsCapacity,
+				AliyunGpuMemRequests:            aliyunGpuMemRequests,
+				AliyunGpuMemRequestsFraction:    calcPercentage(aliyunGpuMemRequests, aliyunGpuMemCapacity),
+				AliyunGpuMemLimits:              aliyunGpuMemLimits,
+				AliyunGpuMemLimitsFraction:      calcPercentage(aliyunGpuMemLimits, aliyunGpuMemCapacity),
+				AliyunGpuMemCapacity:            aliyunGpuMemCapacity,
+			},
+			PodResources{},
+		}
 	default:
 		_cpuRequests, _cpuLimits, _memoryRequests, _memoryLimits := reqs[v1.ResourceCPU], limits[v1.ResourceCPU],
 			reqs[v1.ResourceMemory], limits[v1.ResourceMemory]
@@ -227,10 +318,20 @@ func getNodeAllocatedResources(node v1.Node, podList *v1.PodList, nodeMetricsLis
 		memoryUsages := NewMemoryResource(_memoryUsages)
 		memoryRequests := NewMemoryResource(_memoryRequests.Value())
 		memoryLimits := NewMemoryResource(_memoryLimits.Value())
-		var podCapacity int64 = capacity.Pods().Value()
+		podCapacity := capacity.Pods().Value()
 		podFraction := calcPercentage(int64(len(podList.Items)), podCapacity)
 
-		return NodeAllocatedResources{
+		_nvidiaGpuCountsRequests, _nvidiaGpuCountsLimits := reqs[ResourceNvidiaGpuCounts], limits[ResourceNvidiaGpuCounts]
+		nvidiaGpuCountsRequests := _nvidiaGpuCountsRequests.Value()
+		nvidiaGpuCountsLimits := _nvidiaGpuCountsLimits.Value()
+		nvidiaGpuCountsCapacity := NewGpuResource(ResourceNvidiaGpuCounts, &capacity).Value()
+
+		_aliyunGpuMemRequests, _aliyunGpuMemLimits := reqs[ResourceAliyunGpuMem], limits[ResourceAliyunGpuMem]
+		aliyunGpuMemRequests := _aliyunGpuMemRequests.Value()
+		aliyunGpuMemLimits := _aliyunGpuMemLimits.Value()
+		aliyunGpuMemCapacity := NewGpuResource(ResourceAliyunGpuMem, &capacity).Value()
+
+		nodeAllocatedResources = NodeAllocatedResources{
 			CPUResources{
 				CPUUsages:           cpuUsages,
 				CPURequests:         cpuRequests,
@@ -245,15 +346,28 @@ func getNodeAllocatedResources(node v1.Node, podList *v1.PodList, nodeMetricsLis
 				MemoryRequestsFraction: memoryRequests.calcPercentage(capacity.Memory()),
 				MemoryLimits:           memoryLimits,
 				MemoryLimitsFraction:   memoryLimits.calcPercentage(capacity.Memory()),
-				MemoryCapacity:         NewMemoryResource(capacity.Memory().MilliValue()),
+				MemoryCapacity:         NewMemoryResource(capacity.Memory().Value()),
+			},
+			GPUResources{
+				NvidiaGpuCountsRequests:         nvidiaGpuCountsRequests,
+				NvidiaGpuCountsRequestsFraction: calcPercentage(nvidiaGpuCountsRequests, nvidiaGpuCountsCapacity),
+				NvidiaGpuCountsLimits:           nvidiaGpuCountsLimits,
+				NvidiaGpuCountsLimitsFraction:   calcPercentage(nvidiaGpuCountsLimits, nvidiaGpuCountsCapacity),
+				NvidiaGpuCountsCapacity:         nvidiaGpuCountsCapacity,
+				AliyunGpuMemRequests:            aliyunGpuMemRequests,
+				AliyunGpuMemRequestsFraction:    calcPercentage(aliyunGpuMemRequests, aliyunGpuMemCapacity),
+				AliyunGpuMemLimits:              aliyunGpuMemLimits,
+				AliyunGpuMemLimitsFraction:      calcPercentage(aliyunGpuMemLimits, aliyunGpuMemCapacity),
+				AliyunGpuMemCapacity:            aliyunGpuMemCapacity,
 			},
 			PodResources{
 				AllocatedPods: len(podList.Items),
 				PodCapacity:   podCapacity,
 				PodFraction:   podFraction,
 			},
-		}, nil
+		}
 	}
+	return nodeAllocatedResources, nil
 }
 
 //getPodAllocatedResources
@@ -285,6 +399,7 @@ func getPodAllocatedResources(pod *v1.Pod, podmetric *metricsapi.PodMetrics, res
 	//usageMetrics := podMetricsByPodName[pod.Name]
 	usageMetrics := getPodMetrics(podmetric)
 
+	var podAllocatedResources = PodAllocatedResources{}
 	switch {
 	case resourceType == "cpu":
 		_cpuRequests, _cpuLimits := reqs[v1.ResourceCPU], limits[v1.ResourceCPU]
@@ -294,12 +409,12 @@ func getPodAllocatedResources(pod *v1.Pod, podmetric *metricsapi.PodMetrics, res
 		cpuRequests := NewCpuResource(_cpuRequests.MilliValue())
 		cpuLimits := NewCpuResource(_cpuLimits.MilliValue())
 
-		return PodAllocatedResources{
+		podAllocatedResources = PodAllocatedResources{
 			CPUUsages:         cpuUsages,
 			CPUUsagesFraction: cpuUsages.calcPercentage(&_cpuLimits),
 			CPURequests:       cpuRequests,
 			CPULimits:         cpuLimits,
-		}, nil
+		}
 	case resourceType == "memory":
 		_memoryRequests, _memoryLimits := reqs[v1.ResourceMemory], limits[v1.ResourceMemory]
 		_memoryUsages := usageMetrics[v1.ResourceMemory]
@@ -307,12 +422,28 @@ func getPodAllocatedResources(pod *v1.Pod, podmetric *metricsapi.PodMetrics, res
 		memoryUsages := NewMemoryResource(_memoryUsages.Value())
 		memoryRequests := NewMemoryResource(_memoryRequests.Value())
 		memoryLimits := NewMemoryResource(_memoryLimits.Value())
-		return PodAllocatedResources{
+		podAllocatedResources = PodAllocatedResources{
 			MemoryUsages:         memoryUsages,
 			MemoryUsagesFraction: memoryUsages.calcPercentage(&_memoryLimits),
 			MemoryRequests:       memoryRequests,
 			MemoryLimits:         memoryLimits,
-		}, nil
+		}
+	case resourceType == "gpu":
+		_nvidiaGpuCountsRequests, _nvidiaGpuCountsLimits := reqs[ResourceNvidiaGpuCounts], limits[ResourceNvidiaGpuCounts]
+		nvidiaGpuCountsRequests := _nvidiaGpuCountsRequests.Value()
+		nvidiaGpuCountsLimits := _nvidiaGpuCountsLimits.Value()
+
+		_aliyunGpuMemRequests, _aliyunGpuMemLimits := reqs[ResourceAliyunGpuMem], limits[ResourceAliyunGpuMem]
+		aliyunGpuMemRequests := _aliyunGpuMemRequests.Value()
+		aliyunGpuMemLimits := _aliyunGpuMemLimits.Value()
+
+		podAllocatedResources = PodAllocatedResources{
+			NvidiaGpuCountsRequests: nvidiaGpuCountsRequests,
+			NvidiaGpuCountsLimits:   nvidiaGpuCountsLimits,
+			AliyunGpuMemRequests:    aliyunGpuMemRequests,
+			AliyunGpuMemLimits:      aliyunGpuMemLimits,
+		}
+
 	default:
 		_cpuRequests, _cpuLimits, _memoryRequests, _memoryLimits := reqs[v1.ResourceCPU], limits[v1.ResourceCPU],
 			reqs[v1.ResourceMemory], limits[v1.ResourceMemory]
@@ -326,17 +457,30 @@ func getPodAllocatedResources(pod *v1.Pod, podmetric *metricsapi.PodMetrics, res
 		memoryRequests := NewMemoryResource(_memoryRequests.Value())
 		memoryLimits := NewMemoryResource(_memoryLimits.Value())
 
-		return PodAllocatedResources{
-			CPUUsages:            cpuUsages,
-			CPUUsagesFraction:    cpuUsages.calcPercentage(&_cpuLimits),
-			CPURequests:          cpuRequests,
-			CPULimits:            cpuLimits,
-			MemoryUsages:         memoryUsages,
-			MemoryUsagesFraction: memoryUsages.calcPercentage(&_memoryLimits),
-			MemoryRequests:       memoryRequests,
-			MemoryLimits:         memoryLimits,
-		}, nil
+		_nvidiaGpuCountsRequests, _nvidiaGpuCountsLimits := reqs[ResourceNvidiaGpuCounts], limits[ResourceNvidiaGpuCounts]
+		nvidiaGpuCountsRequests := _nvidiaGpuCountsRequests.Value()
+		nvidiaGpuCountsLimits := _nvidiaGpuCountsLimits.Value()
+
+		_aliyunGpuMemRequests, _aliyunGpuMemLimits := reqs[ResourceAliyunGpuMem], limits[ResourceAliyunGpuMem]
+		aliyunGpuMemRequests := _aliyunGpuMemRequests.Value()
+		aliyunGpuMemLimits := _aliyunGpuMemLimits.Value()
+
+		podAllocatedResources = PodAllocatedResources{
+			CPUUsages:               cpuUsages,
+			CPUUsagesFraction:       cpuUsages.calcPercentage(&_cpuLimits),
+			CPURequests:             cpuRequests,
+			CPULimits:               cpuLimits,
+			MemoryUsages:            memoryUsages,
+			MemoryUsagesFraction:    memoryUsages.calcPercentage(&_memoryLimits),
+			MemoryRequests:          memoryRequests,
+			MemoryLimits:            memoryLimits,
+			NvidiaGpuCountsRequests: nvidiaGpuCountsRequests,
+			NvidiaGpuCountsLimits:   nvidiaGpuCountsLimits,
+			AliyunGpuMemRequests:    aliyunGpuMemRequests,
+			AliyunGpuMemLimits:      aliyunGpuMemLimits,
+		}
 	}
+	return podAllocatedResources, nil
 }
 
 // PodRequestsAndLimits returns a dictionary of all defined resources summed up for all

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/logrusorgru/aurora/v3"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
@@ -13,6 +14,22 @@ const (
 	warning_threshold  = 90.00
 	critical_threshold = 95.00
 )
+const (
+	// nvidia.com/gpu, number
+	ResourceNvidiaGpuCounts v1.ResourceName = "nvidia.com/gpu"
+	// aliyun.com/gpu-count, number
+	ResourceAliyunGpuCounts v1.ResourceName = "aliyun.com/gpu-count"
+	// aliyun.com/gpu-mem, number
+	ResourceAliyunGpuMem v1.ResourceName = "aliyun.com/gpu-mem"
+)
+
+// NewGpuResource returns the list of NewGpuResource
+func NewGpuResource(name v1.ResourceName, rl *v1.ResourceList) *resource.Quantity {
+	if val, ok := (*rl)[name]; ok {
+		return &val
+	}
+	return rl.Name(name, resource.DecimalSI)
+}
 
 //calcPercentage
 func calcPercentage(dividend, divisor int64) float64 {
@@ -63,8 +80,8 @@ func (r *CpuResource) String() string {
 	return fmt.Sprintf("%vm", r.MilliValue())
 }
 
-//podFormat
-func podFormat(a string, b string) string {
+//newFormat
+func newFormat(a string, b string) string {
 	return fmt.Sprintf("%s/%s", a, b)
 }
 
@@ -77,7 +94,7 @@ func intToString(a int) string {
 //float64ToString float64转string
 func float64ToString(s float64) string {
 	//return strconv.FormatFloat(s, 'G', -1, 32)
-	return fmt.Sprintf("%v%%", strconv.FormatFloat(s, 'G', -1, 32))
+	return fmt.Sprintf("%v%%", strconv.FormatFloat(s, 'G', -1, 64))
 
 }
 
@@ -102,6 +119,7 @@ func (r *CpuResource) calcPercentage(divisor *resource.Quantity) float64 {
 func (r *CpuResource) ToQuantity() *resource.Quantity {
 	return resource.NewMilliQuantity(r.MilliValue(), resource.DecimalSI)
 }
+
 
 //FieldString
 func FieldString(str string) float64 {

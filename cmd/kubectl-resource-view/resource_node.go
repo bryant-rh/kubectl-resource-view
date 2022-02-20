@@ -3,6 +3,7 @@ package cmd
 import (
 	//"context"
 	"errors"
+	"strings"
 
 	"github.com/bryant-rh/kubectl-resource-view/pkg/kube"
 	"github.com/bryant-rh/kubectl-resource-view/pkg/writer"
@@ -25,6 +26,7 @@ import (
 type ResourceNodeOptions struct {
 	ResourceName       string
 	ResourceType       string
+	ResourceTypeslice  []string
 	Selector           string
 	SortBy             string
 	NoFormat           bool
@@ -41,7 +43,7 @@ type ResourceNodeOptions struct {
 
 var (
 	ResourceNodeLong = templates.LongDesc(i18n.T(`
-		Display resource (CPU/Memory/PodCount) usage of nodes.
+		Display resource (cpu/memory/gpu/podcount) usage of nodes.
 
 		The resource node command allows you to see the resource consumption of nodes.`))
 
@@ -50,7 +52,12 @@ var (
 		  kubectl resource-view node
 
 		  # Show metrics for a given node
-		  kubectl resource-view node NODE_NAME`))
+		  kubectl resource-view node NODE_NAME
+
+		  # Show metrics for the node defined by type name=cpu,memory,gpu,pod
+		  kubectl resource-view node -t cpu,memory,gpu,pod
+
+		  `))
 )
 
 func NewCmdResouceNode(f cmdutil.Factory, o *ResourceNodeOptions, streams genericclioptions.IOStreams) *cobra.Command {
@@ -64,7 +71,7 @@ func NewCmdResouceNode(f cmdutil.Factory, o *ResourceNodeOptions, streams generi
 	cmd := &cobra.Command{
 		Use:                   "node [NAME | -l label]",
 		DisableFlagsInUseLine: true,
-		Short:                 i18n.T("Display resource (CPU/Memory/PodCount) usage of nodes"),
+		Short:                 i18n.T("Display resource (cpu/memory/gpu/podcount) usage of nodes"),
 		Long:                  ResourceNodeLong,
 		Example:               ResourceNodeExample,
 		ValidArgsFunction:     util.ResourceNameCompletionFunc(f, "node"),
@@ -77,9 +84,9 @@ func NewCmdResouceNode(f cmdutil.Factory, o *ResourceNodeOptions, streams generi
 	}
 
 	cmd.Flags().StringVarP(&o.Selector, "selector", "l", o.Selector, "Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)")
-	cmd.Flags().StringVarP(&o.ResourceType, "type", "t", o.ResourceType, "Type information hierarchically (default: All Type)[possible values: cpu, memory, pod]")
+	cmd.Flags().StringVarP(&o.ResourceType, "type", "t", o.ResourceType, "Type information hierarchically (default: All Type)[possible values: cpu,memory,pod,gpu], Multiple can be specified, separated by commas")
 	cmd.Flags().BoolVar(&o.NoFormat, "no-format", o.NoFormat, "If present, print output without format table")
-	cmd.Flags().StringVar(&o.SortBy, "sort-by", o.SortBy, "If non-empty, sort nodes list using specified field. The field can be either 'cpu' or 'memory' or ''.")
+	cmd.Flags().StringVar(&o.SortBy, "sort-by", o.SortBy, "If non-empty, sort nodes list using specified field. The field can be either 'cpu' or 'memory' ")
 
 	return cmd
 }
@@ -118,9 +125,13 @@ func (o *ResourceNodeOptions) Validate(cmd *cobra.Command, args []string) error 
 	if len(o.ResourceName) > 0 && len(o.Selector) > 0 {
 		return errors.New("only one of NAME or --selector can be provided")
 	}
+
+	o.ResourceTypeslice = strings.Split(o.ResourceType, ",")
 	if len(o.ResourceType) > 0 {
-		if o.ResourceType != sortByCPU && o.ResourceType != sortByMemory && o.ResourceType != sortByPod {
-			return errors.New("--type accepts only cpu or memory or pod")
+		for _, str := range o.ResourceTypeslice {
+			if !MapKeyInIntSlice(nodeResourceType, str) {
+				return errors.New("--type accepts only cpu,memory,pod,gpu")
+			}
 		}
 	}
 	return nil
@@ -147,11 +158,11 @@ func (o ResourceNodeOptions) RunResourceNode() error {
 		return errors.New("metrics API not available")
 
 	}
-
-	data, err := o.Client.GetNodeResources(o.ResourceName, o.ResourceType, o.SortBy, selector)
+	//ResourceType := strings.Split(o.ResourceType, ",")
+	data, err := o.Client.GetNodeResources(o.ResourceName, o.ResourceTypeslice, o.SortBy, selector)
 	if err != nil {
 		return err
 	}
-	writer.NodeWrite(data, o.ResourceType, o.NoFormat)
+	writer.NodeWrite(data, o.ResourceTypeslice, o.NoFormat)
 	return nil
 }

@@ -2,7 +2,6 @@ package kube
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"sort"
@@ -102,7 +101,7 @@ func (k *KubeClient) GetPodByPodname(podName string, namespace string) (*corev1.
 }
 
 //NodeResources
-func (k *KubeClient) GetNodeResources(resourceName string, resourceType string, sortBy string, selector labels.Selector) ([][]string, error) {
+func (k *KubeClient) GetNodeResources(resourceName string, resourceType []string, sortBy string, selector labels.Selector) ([][]string, error) {
 	//resources := make(map[string]map[string]interface{})
 	var resources [][]string
 	var nodenames []string
@@ -136,41 +135,60 @@ func (k *KubeClient) GetNodeResources(resourceName string, resourceType string, 
 			return nil, err
 		}
 
-		noderesource, err := getNodeAllocatedResources(nodes[nodename], activePodsList, NodeMetricsList, resourceType)
-		if err != nil {
-			log.Printf("Couldn't get allocated resources of %s node: %s\n", nodename, err)
-		}
-
 		//if cpu,ok := noderesource.(CpuResource); ok{
-		switch v := noderesource.(type) {
-		case NodeAllocatedResources:
-			resource = append(resource, nodename,
-				v.CPUUsages.String(), v.CPURequests.String(), ExceedsCompare(float64ToString(v.CPURequestsFraction)),
-				v.CPULimits.String(), float64ToString(v.CPULimitsFraction), v.CPUCapacity.String(),
-				v.MemoryUsages.String(), v.MemoryRequests.String(), ExceedsCompare(float64ToString(v.MemoryRequestsFraction)),
-				v.MemoryLimits.String(), float64ToString(v.MemoryLimitsFraction), v.MemoryCapacity.String(),
-				podFormat(intToString(v.AllocatedPods), int64ToString(v.PodCapacity)), ExceedsCompare(float64ToString(v.PodFraction)))
-		case CPUResources:
-			resource = append(resource, nodename,
-				v.CPUUsages.String(), v.CPURequests.String(), ExceedsCompare(float64ToString(v.CPURequestsFraction)),
-				v.CPULimits.String(), float64ToString(v.CPULimitsFraction), v.CPUCapacity.String())
-		case MemoryResources:
-			resource = append(resource, nodename,
-				v.MemoryUsages.String(), v.MemoryRequests.String(), ExceedsCompare(float64ToString(v.MemoryRequestsFraction)),
-				v.MemoryLimits.String(), float64ToString(v.MemoryLimitsFraction), v.MemoryCapacity.String())
-		case PodResources:
-			resource = append(resource, nodename,
-				podFormat(intToString(v.AllocatedPods), int64ToString(v.PodCapacity)), ExceedsCompare(float64ToString(v.PodFraction)))
-		default:
-			return nil, errors.New("unexpected type")
+		resource = append(resource, nodename)
+		for _, t := range resourceType {
+			noderesource, err := getNodeAllocatedResources(nodes[nodename], activePodsList, NodeMetricsList, t)
+			if err != nil {
+				log.Printf("Couldn't get allocated resources of %s node: %s\n", nodename, err)
+			}
+			switch {
+			case t == "cpu":
+				resource = append(resource,
+					noderesource.CPUUsages.String(),
+					newFormat(noderesource.CPURequests.String(), noderesource.CPUCapacity.String()), ExceedsCompare(float64ToString(noderesource.CPURequestsFraction)),
+					newFormat(noderesource.CPULimits.String(), noderesource.CPUCapacity.String()), float64ToString(noderesource.CPULimitsFraction),
+				)
+			case t == "memory":
+				resource = append(resource,
+					noderesource.MemoryUsages.String(),
+					newFormat(noderesource.MemoryRequests.String(), noderesource.MemoryCapacity.String()), ExceedsCompare(float64ToString(noderesource.MemoryRequestsFraction)),
+					newFormat(noderesource.MemoryLimits.String(), noderesource.MemoryCapacity.String()), float64ToString(noderesource.MemoryLimitsFraction),
+				)
+			case t == "gpu":
+				resource = append(resource,
+					newFormat(int64ToString(noderesource.NvidiaGpuCountsRequests), int64ToString(noderesource.NvidiaGpuCountsCapacity)), ExceedsCompare(float64ToString(noderesource.NvidiaGpuCountsRequestsFraction)),
+					newFormat(int64ToString(noderesource.NvidiaGpuCountsLimits), int64ToString(noderesource.NvidiaGpuCountsCapacity)), float64ToString(noderesource.NvidiaGpuCountsLimitsFraction),
+					newFormat(int64ToString(noderesource.AliyunGpuMemRequests), int64ToString(noderesource.AliyunGpuMemCapacity)), ExceedsCompare(float64ToString(noderesource.AliyunGpuMemRequestsFraction)),
+					newFormat(int64ToString(noderesource.AliyunGpuMemLimits), int64ToString(noderesource.AliyunGpuMemCapacity)), float64ToString(noderesource.AliyunGpuMemLimitsFraction),
+				)
+			case t == "pod":
+				resource = append(resource,
+					newFormat(intToString(noderesource.AllocatedPods), int64ToString(noderesource.PodCapacity)), ExceedsCompare(float64ToString(noderesource.PodFraction)),
+				)
+			default:
+				resource = append(resource,
+					noderesource.CPUUsages.String(),
+					newFormat(noderesource.CPURequests.String(), noderesource.CPUCapacity.String()), ExceedsCompare(float64ToString(noderesource.CPURequestsFraction)),
+					newFormat(noderesource.CPULimits.String(), noderesource.CPUCapacity.String()), float64ToString(noderesource.CPULimitsFraction),
+					noderesource.MemoryUsages.String(),
+					newFormat(noderesource.MemoryRequests.String(), noderesource.MemoryCapacity.String()), ExceedsCompare(float64ToString(noderesource.MemoryRequestsFraction)),
+					newFormat(noderesource.MemoryLimits.String(), noderesource.MemoryCapacity.String()), float64ToString(noderesource.MemoryLimitsFraction),
+					newFormat(int64ToString(noderesource.NvidiaGpuCountsRequests), int64ToString(noderesource.NvidiaGpuCountsCapacity)), ExceedsCompare(float64ToString(noderesource.NvidiaGpuCountsRequestsFraction)),
+					newFormat(int64ToString(noderesource.NvidiaGpuCountsLimits), int64ToString(noderesource.NvidiaGpuCountsCapacity)), float64ToString(noderesource.NvidiaGpuCountsLimitsFraction),
+					newFormat(int64ToString(noderesource.AliyunGpuMemRequests), int64ToString(noderesource.AliyunGpuMemCapacity)), ExceedsCompare(float64ToString(noderesource.AliyunGpuMemRequestsFraction)),
+					newFormat(int64ToString(noderesource.AliyunGpuMemLimits), int64ToString(noderesource.AliyunGpuMemCapacity)), float64ToString(noderesource.AliyunGpuMemLimitsFraction),
+					newFormat(intToString(noderesource.AllocatedPods), int64ToString(noderesource.PodCapacity)), ExceedsCompare(float64ToString(noderesource.PodFraction)),
+				)
+			}
 		}
 		resources = append(resources, resource)
+
 	}
 	return resources, err
-
 }
 
-func (k *KubeClient) GetPodResources(podmetrics []metricsapi.PodMetrics, namespace string, resourceName string, allNamespaces bool, resourceType string, sortBy string, labelSelector labels.Selector, fieldSelector fields.Selector) ([][]string, error) {
+func (k *KubeClient) GetPodResources(podmetrics []metricsapi.PodMetrics, namespace string, resourceName string, allNamespaces bool, resourceType []string, sortBy string, labelSelector labels.Selector, fieldSelector fields.Selector) ([][]string, error) {
 	var resources [][]string
 
 	//判断是否排序
@@ -183,26 +201,39 @@ func (k *KubeClient) GetPodResources(podmetrics []metricsapi.PodMetrics, namespa
 		if err != nil {
 			return nil, err
 		}
-		podresource, err := getPodAllocatedResources(pod, &podmetric, resourceType)
-		if err != nil {
-			return nil, err
-		}
 
-		switch {
-		case resourceType == "cpu":
-			resource = append(resource, podmetric.Namespace, podmetric.Name,
-				podresource.CPUUsages.String(), ExceedsCompare(float64ToString(podresource.CPUUsagesFraction)),
-				podresource.CPURequests.String(), podresource.CPULimits.String())
-		case resourceType == "memory":
-			resource = append(resource, podmetric.Namespace, podmetric.Name,
-				podresource.MemoryUsages.String(), ExceedsCompare(float64ToString(podresource.MemoryUsagesFraction)),
-				podresource.MemoryRequests.String(), podresource.MemoryLimits.String())
-		default:
-			resource = append(resource, podmetric.Namespace, podmetric.Name,
-				podresource.CPUUsages.String(), ExceedsCompare(float64ToString(podresource.CPUUsagesFraction)),
-				podresource.CPURequests.String(), podresource.CPULimits.String(),
-				podresource.MemoryUsages.String(), ExceedsCompare(float64ToString(podresource.MemoryUsagesFraction)),
-				podresource.MemoryRequests.String(), podresource.MemoryLimits.String())
+		resource = append(resource, podmetric.Namespace, podmetric.Name)
+		for _, t := range resourceType {
+			podresource, err := getPodAllocatedResources(pod, &podmetric, t)
+			if err != nil {
+				return nil, err
+			}
+			switch {
+			case t == "cpu":
+				resource = append(resource,
+					podresource.CPUUsages.String(), ExceedsCompare(float64ToString(podresource.CPUUsagesFraction)),
+					podresource.CPURequests.String(), podresource.CPULimits.String(),
+				)
+			case t == "memory":
+				resource = append(resource,
+					podresource.MemoryUsages.String(), ExceedsCompare(float64ToString(podresource.MemoryUsagesFraction)),
+					podresource.MemoryRequests.String(), podresource.MemoryLimits.String(),
+				)
+			case t == "gpu":
+				resource = append(resource,
+					int64ToString(podresource.NvidiaGpuCountsRequests), int64ToString(podresource.NvidiaGpuCountsLimits),
+					int64ToString(podresource.AliyunGpuMemRequests), int64ToString(podresource.AliyunGpuMemLimits),
+				)
+			default:
+				resource = append(resource,
+					podresource.CPUUsages.String(), ExceedsCompare(float64ToString(podresource.CPUUsagesFraction)),
+					podresource.CPURequests.String(), podresource.CPULimits.String(),
+					podresource.MemoryUsages.String(), ExceedsCompare(float64ToString(podresource.MemoryUsagesFraction)),
+					podresource.MemoryRequests.String(), podresource.MemoryLimits.String(),
+					int64ToString(podresource.NvidiaGpuCountsRequests), int64ToString(podresource.NvidiaGpuCountsLimits),
+					int64ToString(podresource.AliyunGpuMemRequests), int64ToString(podresource.AliyunGpuMemLimits),
+				)
+			}
 		}
 		resources = append(resources, resource)
 
@@ -275,29 +306,3 @@ func (k *KubeClient) GetPodMetricsFromMetricsAPI(namespace, resourceName string,
 	}
 	return metrics, nil
 }
-
-// func (k *KubeClient) ClusterCapacity() (capacity corev1.ResourceList, err error) {
-// 	nodes, err := k.apiClient.CoreV1().Nodes().List(context.TODO(), metav1.ListOptions{})
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	capacity = corev1.ResourceList{}
-
-// 	for _, node := range nodes.Items {
-
-// 		allocatable := NodeCapacity(&node)
-
-// 		for name, quantity := range allocatable {
-// 			if value, ok := capacity[name]; ok {
-// 				value.Add(quantity)
-// 				capacity[name] = value
-// 			} else {
-// 				capacity[name] = quantity
-// 			}
-// 		}
-
-// 	}
-
-// 	return capacity, nil
-// }

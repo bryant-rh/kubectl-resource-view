@@ -3,6 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -26,6 +27,7 @@ type ResourcePodOptions struct {
 	ResourceName       string
 	Namespace          string
 	ResourceType       string
+	ResourceTypeslice  []string
 	LabelSelector      string
 	FieldSelector      string
 	SortBy             string
@@ -48,7 +50,7 @@ type ResourcePodOptions struct {
 
 var (
 	resourcePodLong = templates.LongDesc(i18n.T(`
-		Display resource (CPU/Memory) usage of pods.
+		Display resource (cpu/memory/gpu) usage of pods.
 
 		The 'resource-view pod' command allows you to see the resource consumption of pods.
 
@@ -62,11 +64,15 @@ var (
 		# Show metrics for all pods in the given namespace
 		kubectl resource-view pod --namespace=NAMESPACE
 
-		# Show metrics for a given pod and its containers
-		kubectl resource-view pod POD_NAME --containers
+		# Show metrics for a given pod 
+		kubectl resource-view pod POD_NAME
 
 		# Show metrics for the pods defined by label name=myLabel
-		kubectl resource-view pod -l name=myLabel`))
+		kubectl resource-view pod -l name=myLabel
+
+		# Show metrics for the pods defined by type name=cpu,memory,gpu
+		kubectl resource-view pod -t cpu,memory,gpu
+		`))
 )
 
 func NewCmdResoucePod(f cmdutil.Factory, o *ResourcePodOptions, streams genericclioptions.IOStreams) *cobra.Command {
@@ -80,7 +86,7 @@ func NewCmdResoucePod(f cmdutil.Factory, o *ResourcePodOptions, streams genericc
 	cmd := &cobra.Command{
 		Use:                   "pod [NAME | -l label]",
 		DisableFlagsInUseLine: true,
-		Short:                 i18n.T("Display resource (CPU/memory) usage of pods"),
+		Short:                 i18n.T("Display resource (cpu/memory/gpu) usage of pods"),
 		Long:                  resourcePodLong,
 		Example:               resourcePodExample,
 		ValidArgsFunction:     util.ResourceNameCompletionFunc(f, "pod"),
@@ -92,7 +98,7 @@ func NewCmdResoucePod(f cmdutil.Factory, o *ResourcePodOptions, streams genericc
 		Aliases: []string{"pods", "po"},
 	}
 	cmd.Flags().StringVarP(&o.LabelSelector, "selector", "l", o.LabelSelector, "Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)")
-	cmd.Flags().StringVarP(&o.ResourceType, "type", "t", o.ResourceType, "Type information hierarchically (default: All Type)[possible values: cpu, memory, pod]")
+	cmd.Flags().StringVarP(&o.ResourceType, "type", "t", o.ResourceType, "Type information hierarchically (default: All Type)[possible values: cpu,memory,gpu],Multiple can be specified, separated by commas")
 	cmd.Flags().StringVar(&o.FieldSelector, "field-selector", o.FieldSelector, "Selector (field query) to filter on, supports '=', '==', and '!='.(e.g. --field-selector key1=value1,key2=value2). The server only supports a limited number of field queries per type.")
 	cmd.Flags().StringVar(&o.SortBy, "sort-by", o.SortBy, "If non-empty, sort pods list using specified field. The field can be either 'cpu' or 'memory'.")
 	cmd.Flags().BoolVarP(&o.AllNamespaces, "all-namespaces", "A", o.AllNamespaces, "If present, list the requested object(s) across all namespaces. Namespace in current context is ignored even if specified with --namespace.")
@@ -139,9 +145,13 @@ func (o *ResourcePodOptions) Validate() error {
 	if len(o.ResourceName) > 0 && len(o.LabelSelector) > 0 {
 		return errors.New("only one of NAME or --selector can be provided")
 	}
+
+	o.ResourceTypeslice = strings.Split(o.ResourceType, ",")
 	if len(o.ResourceType) > 0 {
-		if o.ResourceType != sortByCPU && o.ResourceType != sortByMemory {
-			return errors.New("--type accepts only cpu or memory")
+		for _, str := range o.ResourceTypeslice {
+			if !MapKeyInIntSlice(podResourceType, str) {
+				return errors.New("--type accepts only cpu,memory,gpu")
+			}
 		}
 	}
 	return nil
@@ -196,11 +206,11 @@ func (o ResourcePodOptions) RunResourcePod() error {
 		}
 	}
 
-	data, err := o.Client.GetPodResources(metrics.Items, o.Namespace, o.ResourceName, o.AllNamespaces, o.ResourceType, o.SortBy, labelSelector, fieldSelector)
+	data, err := o.Client.GetPodResources(metrics.Items, o.Namespace, o.ResourceName, o.AllNamespaces, o.ResourceTypeslice, o.SortBy, labelSelector, fieldSelector)
 	if err != nil {
 
 		return err
 	}
-	writer.PodWrite(data, o.ResourceType, o.NoFormat)
+	writer.PodWrite(data, o.ResourceTypeslice, o.NoFormat)
 	return nil
 }

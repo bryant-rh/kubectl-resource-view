@@ -1,11 +1,14 @@
 # kubectl resource-view
 A plugin to access Kubernetes resource requests, limits, and usage.
 
-Display Resource (CPU/Memory/PodCount) Usage and Request and Limit.
+Display Resource (CPU/Memory/Gpu/PodCount) Usage and Request and Limit.
 
 The resource command allows you to see the resource consumption for nodes or pods.
 
-<font color="red">This command requires Metrics Server to be correctly configured and working on the server.</font>
+```diff
+- This command requires Metrics Server to be correctly configured and working on the server
+```
+
 
 ## Installation
 
@@ -23,7 +26,7 @@ Use [krew](https://krew.sigs.k8s.io/) plugin manager to instal:
 ## Usage
 ```bash
 $ kubectl resource-view -h  # or kubectl-resource-view -h
-Display Resource (CPU/Memory/PodCount) Usage and Request and Limit.
+Display Resource (cpu/memory/gpu/podcount) Usage and Request and Limit.
 
  The resource command allows you to see the resource consumption for nodes or pods.
 
@@ -34,22 +37,22 @@ Usage:
   kubectl-resource-view [command]
 
 Examples:
-  node        Display Resource (CPU/Memory/PodCount) usage of nodes
-  pod         Display Resource (CPU/Memory)          usage of pods
+  node        Display Resource (cpu/memory/gpu/podcount) usage of nodes
+  pod         Display Resource (cpu/memory/gpu)          usage of pods
 
 Available Commands:
   completion  Generate the autocompletion script for the specified shell
   help        Help about any command
-  node        Display resource (CPU/Memory/PodCount) usage of nodes
-  pod         Display resource (CPU/memory) usage of pods
+  node        Display resource (cpu/memory/gpu/podcount) usage of nodes
+  pod         Display resource (cpu/memory/gpu) usage of pods
 
 ```
 ### node
 ```bash
 $ kubectl resource-view node -h  # or kubectl-resource-view node -h
-Display resource (CPU/Memory/PodCount) usage of nodes.
+Display resource (cpu/memory/gpu/podcount) usage of nodes.
 
- The resource-node command allows you to see the resource consumption of nodes.
+ The resource node command allows you to see the resource consumption of nodes.
 
 Usage:
   kubectl-resource-view node [NAME | -l label]
@@ -60,25 +63,28 @@ Aliases:
 Examples:
   # Show metrics for all nodes
   kubectl resource-view node
-  
+
   # Show metrics for a given node
   kubectl resource-view node NODE_NAME
+
+  # Show metrics for the node defined by type name=cpu,memory,gpu,pod
+  kubectl resource-view node -t cpu,memory,gpu,pod
 
 Flags:
   -h, --help              help for node
       --no-format         If present, print output without format table
   -l, --selector string   Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)
-      --sort-by string    If non-empty, sort nodes list using specified field. The field can be either 'cpu' or 'memory' or ''.
-  -t, --type string       Type information hierarchically (default: All Type)[possible values: cpu, memory, pod]
+      --sort-by string    If non-empty, sort nodes list using specified field. The field can be either 'cpu' or 'memory'
+  -t, --type string       Type information hierarchically (default: All Type)[possible values: cpu,memory,pod,gpu], Multiple can be specified, separated by commas
 
 ```
 
 ### pod
 ``` bash
 $ kubectl resource-view pod -h  # or kubectl-resource-view  pod -h
-Display resource (CPU/Memory) usage of pods.
+Display resource (cpu/memory/gpu) usage of pods.
 
- The 'resource pod' command allows you to see the resource consumption of pods.
+ The 'resource-view pod' command allows you to see the resource consumption of pods.
 
  Due to the metrics pipeline delay, they may be unavailable for a few minutes since pod creation.
 
@@ -91,15 +97,18 @@ Aliases:
 Examples:
   # Show metrics for all pods in the default namespace
   kubectl resource-view pod
-  
+
   # Show metrics for all pods in the given namespace
   kubectl resource-view pod --namespace=NAMESPACE
-  
-  # Show metrics for a given pod and its containers
-  kubectl resource-view pod POD_NAME --containers
-  
+
+  # Show metrics for a given pod
+  kubectl resource-view pod POD_NAME
+
   # Show metrics for the pods defined by label name=myLabel
   kubectl resource-view pod -l name=myLabel
+
+  # Show metrics for the pods defined by type name=cpu,memory,gpu
+  kubectl resource-view pod -t cpu,memory,gpu
 
 Flags:
   -A, --all-namespaces          If present, list the requested object(s) across all namespaces. Namespace in current context is ignored even if specified with --namespace.
@@ -108,7 +117,8 @@ Flags:
       --no-format               If present, print output without format table
   -l, --selector string         Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)
       --sort-by string          If non-empty, sort pods list using specified field. The field can be either 'cpu' or 'memory'.
-  -t, --type string             Type information hierarchically (default: All Type)[possible values: cpu, memory, pod]
+  -t, --type string             Type information hierarchically (default: All Type)[possible values: cpu,memory,gpu],Multiple can be specified, separated by commas
+
 ```
 
 ## Demo
@@ -117,16 +127,18 @@ Flags:
 
 Show aggregate resource requests and limits  and pods Capacity. This is the same information displayed by kubectl describe nodes but in a easier to view format.
 
-<font color="green">When the percentage of cpu request and memory request is greater than 90, it will be marked in yellow, and if it is greater than 95, it will be marked in red</font>
+```diff
++ When the percentage of cpu request and memory request is greater than 90, it will be marked in yellow, and if it is greater than 95, it will be marked in red
+```
 
 
 Example (node):
 
 ![example Kubernetes node](assets/demo-node-1.png)
 
-Example (Only display one of the data of the cpu or memroy or pod):
+Example (Only display one of the data of the cpu or memroy or pod or gpu):
 ```bash
--t  [cpu/memory/pod]
+-t  [cpu,memory,gpu,pod] Multiple can be specified, separated by commas
 ```
 
 ![example Kubernetes node cpu or memroy or pod](assets/demo-node-2.png)
@@ -158,7 +170,9 @@ Example (Support similar kubectl format display):
 
 Show aggregate resource requests and limits  and pods Capacity. This is the same information displayed by kubectl describe nodes but in a easier to view format.
 
-<font color="green">When the percentage of cpu use percent and memory use percent is greater than 90, it will be marked in yellow, and if it is greater than 95, it will be marked in red</font>
+```diff
++ When the percentage of cpu use percent and memory use percent is greater than 90, it will be marked in yellow, and if it is greater than 95, it will be marked in red
+```
 
 Example (pod):
 
@@ -166,7 +180,7 @@ Example (pod):
 
 Example (Only display one of the data of the cpu or memroy):
 ```bash
--t  [cpu/memory]
+-t  [cpu/memory/gpu] Multiple can be specified, separated by commas
 ```
 
 ![example Kubernetes node cpu or memroy or pod](assets/demo-pod-7.png)
@@ -203,3 +217,5 @@ Apache 2.0. See [LICENSE](./LICENSE).
 ---
 
 This is not an official Google project.
+
+
