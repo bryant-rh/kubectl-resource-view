@@ -112,7 +112,10 @@ func (k *KubeClient) GetNodeResources(ctx context.Context, resourceName string, 
 	}
 
 	if len(sortBy) > 0 {
-		sort.Sort(metricsutil.NewNodeMetricsSorter(metrics.Items, sortBy))
+		sorter := metricsutil.NewNodeMetricsSorter(metrics.Items, sortBy)
+		if sorter != nil {
+			sort.Sort(sorter)
+		}
 	}
 
 	var nodenames []string
@@ -125,8 +128,12 @@ func (k *KubeClient) GetNodeResources(ctx context.Context, resourceName string, 
 		return nil, err
 	}
 
+	// 使用 map 来保存结果，键为节点名称
+	resultMap := make(map[string][]string)
+	
 	// Create channels for results and errors
 	type nodeResult struct {
+		nodeName string
 		resource []string
 		err      error
 	}
@@ -138,7 +145,7 @@ func (k *KubeClient) GetNodeResources(ctx context.Context, resourceName string, 
 			// Check context before starting work
 			select {
 			case <-ctx.Done():
-				resultChan <- nodeResult{nil, ctx.Err()}
+				resultChan <- nodeResult{nodename, nil, ctx.Err()}
 				return
 			default:
 			}
@@ -148,14 +155,14 @@ func (k *KubeClient) GetNodeResources(ctx context.Context, resourceName string, 
 			// Get active pods with context
 			activePodsList, err := k.GetActivePodByNodename(ctx, nodes[nodename])
 			if err != nil {
-				resultChan <- nodeResult{nil, err}
+				resultChan <- nodeResult{nodename, nil, err}
 				return
 			}
 
 			// Get node metrics with context
 			NodeMetricsList, err := k.GetNodeMetricsFromMetricsAPI(ctx, resourceName, selector)
 			if err != nil {
-				resultChan <- nodeResult{nil, err}
+				resultChan <- nodeResult{nodename, nil, err}
 				return
 			}
 
@@ -164,7 +171,7 @@ func (k *KubeClient) GetNodeResources(ctx context.Context, resourceName string, 
 				// Check context periodically
 				select {
 				case <-ctx.Done():
-					resultChan <- nodeResult{nil, ctx.Err()}
+					resultChan <- nodeResult{nodename, nil, ctx.Err()}
 					return
 				default:
 				}
@@ -232,12 +239,11 @@ func (k *KubeClient) GetNodeResources(ctx context.Context, resourceName string, 
 					)
 				}
 			}
-			resultChan <- nodeResult{resource, nil}
+			resultChan <- nodeResult{nodename, resource, nil}
 		}(nodename)
 	}
 
 	// Collect results with context awareness
-	var resources [][]string
 	var firstError error
 	for i := 0; i < len(nodenames); i++ {
 		select {
@@ -251,8 +257,16 @@ func (k *KubeClient) GetNodeResources(ctx context.Context, resourceName string, 
 				continue
 			}
 			if result.resource != nil {
-				resources = append(resources, result.resource)
+				resultMap[result.nodeName] = result.resource
 			}
+		}
+	}
+
+	// 按照原始排序顺序重建结果数组
+	var resources [][]string
+	for _, nodeName := range nodenames {
+		if resource, ok := resultMap[nodeName]; ok {
+			resources = append(resources, resource)
 		}
 	}
 
@@ -263,25 +277,31 @@ func (k *KubeClient) GetNodeResources(ctx context.Context, resourceName string, 
 }
 
 func (k *KubeClient) GetPodResources(ctx context.Context, podmetrics []metricsapi.PodMetrics, namespace string, resourceName string, allNamespaces bool, resourceType []string, sortBy string, labelSelector labels.Selector, fieldSelector fields.Selector) ([][]string, error) {
-	// 判断是否排序
 	if len(sortBy) > 0 {
-		sort.Sort(metricsutil.NewPodMetricsSorter(podmetrics, allNamespaces, sortBy))
+		sorter := metricsutil.NewPodMetricsSorter(podmetrics, allNamespaces, sortBy)
+		if sorter != nil {
+			sort.Sort(sorter)
+		}
 	}
 
-	// Create channels for results and errors
+	// 使用 map 来保存结果，键为 pod 的唯一标识符
+	resultMap := make(map[string][]string)
+	
 	type podResult struct {
+		podKey string // namespace/name
 		resource []string
 		err      error
 	}
 	resultChan := make(chan podResult, len(podmetrics))
 
-	// Process pods concurrently
+	// 修改并发处理以包含 pod 标识符
 	for _, podmetric := range podmetrics {
 		go func(podmetric metricsapi.PodMetrics) {
+			podKey := podmetric.Namespace + "/" + podmetric.Name
 			// Check context before starting work
 			select {
 			case <-ctx.Done():
-				resultChan <- podResult{nil, ctx.Err()}
+				resultChan <- podResult{podKey, nil, ctx.Err()}
 				return
 			default:
 			}
@@ -289,7 +309,7 @@ func (k *KubeClient) GetPodResources(ctx context.Context, podmetrics []metricsap
 			var resource []string
 			pod, err := k.GetPodByPodname(ctx, podmetric.Name, podmetric.Namespace)
 			if err != nil {
-				resultChan <- podResult{nil, err}
+				resultChan <- podResult{podKey, nil, err}
 				return
 			}
 
@@ -298,14 +318,14 @@ func (k *KubeClient) GetPodResources(ctx context.Context, podmetrics []metricsap
 				// Check context periodically during processing
 				select {
 				case <-ctx.Done():
-					resultChan <- podResult{nil, ctx.Err()}
+					resultChan <- podResult{podKey, nil, ctx.Err()}
 					return
 				default:
 				}
 
 				podresource, err := getPodAllocatedResources(pod, &podmetric, t)
 				if err != nil {
-					resultChan <- podResult{nil, err}
+					resultChan <- podResult{podKey, nil, err}
 					return
 				}
 				switch {
@@ -333,12 +353,11 @@ func (k *KubeClient) GetPodResources(ctx context.Context, podmetrics []metricsap
 					)
 				}
 			}
-			resultChan <- podResult{resource, nil}
+			resultChan <- podResult{podKey, resource, nil}
 		}(podmetric)
 	}
 
-	// Collect results with context awareness
-	var resources [][]string
+	// 收集结果到 map
 	var firstError error
 	for i := 0; i < len(podmetrics); i++ {
 		select {
@@ -352,8 +371,17 @@ func (k *KubeClient) GetPodResources(ctx context.Context, podmetrics []metricsap
 				continue
 			}
 			if result.resource != nil {
-				resources = append(resources, result.resource)
+				resultMap[result.podKey] = result.resource
 			}
+		}
+	}
+
+	// 按照原始排序顺序重建结果数组
+	var resources [][]string
+	for _, podmetric := range podmetrics {
+		podKey := podmetric.Namespace + "/" + podmetric.Name
+		if resource, ok := resultMap[podKey]; ok {
+			resources = append(resources, resource)
 		}
 	}
 
