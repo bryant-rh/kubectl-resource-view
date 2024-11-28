@@ -1,9 +1,10 @@
 package cmd
 
 import (
-	//"context"
+	"context"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/bryant-rh/kubectl-resource-view/pkg/kube"
 	"github.com/bryant-rh/kubectl-resource-view/pkg/writer"
@@ -159,10 +160,20 @@ func (o ResourceNodeOptions) RunResourceNode() error {
 
 	}
 	//ResourceType := strings.Split(o.ResourceType, ",")
-	data, err := o.Client.GetNodeResources(o.ResourceName, o.ResourceTypeslice, o.SortBy, selector)
+
+	// 添加context用于超时控制
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	// 修改GetNodeResources调用，传入context
+	data, err := o.Client.GetNodeResources(ctx, o.ResourceName, o.ResourceTypeslice, o.SortBy, selector)
 	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			return errors.New("operation timed out - too many nodes or slow API response")
+		}
 		return err
 	}
+
 	writer.NodeWrite(data, o.ResourceTypeslice, o.NoFormat)
 	return nil
 }

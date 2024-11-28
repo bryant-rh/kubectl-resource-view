@@ -26,7 +26,7 @@ func NodeWrite(data [][]string, resourceType []string, outType bool) {
 		case t == "gpu":
 			header = append(header,
 				"NVIDIA/GPU REQ", "NVIDIA/GPU REQ(%)", "NVIDIA/GPU LIM", "NVIDIA/GPU LIM(%)",
-				"ALIYUN/GPU-MEM REQ", "ALIYUN/GPU-MEM REQ(%)", "ALIYUN/GPU-MEM LIM", "ALIYUN/GPU-MEM LIM(%)",
+				// "ALIYUN/GPU-MEM REQ", "ALIYUN/GPU-MEM REQ(%)", "ALIYUN/GPU-MEM LIM", "ALIYUN/GPU-MEM LIM(%)",
 			)
 		case t == "pod":
 			header = append(header,
@@ -37,7 +37,7 @@ func NodeWrite(data [][]string, resourceType []string, outType bool) {
 				"CPU USE", "CPU REQ", "CPU REQ(%)", "CPU LIM", "CPU LIM(%)",
 				"MEM USE", "MEM REQ", "MEM REQ(%)", "MEM LIM", "MEM LIM(%)",
 				"NVIDIA/GPU REQ", "NVIDIA/GPU REQ(%)", "NVIDIA/GPU LIM", "NVIDIA/GPU LIM(%)",
-				"ALIYUN/GPU-MEM REQ", "ALIYUN/GPU-MEM REQ(%)", "ALIYUN/GPU-MEM LIM", "ALIYUN/GPU-MEM LIM(%)",
+				// "ALIYUN/GPU-MEM REQ", "ALIYUN/GPU-MEM REQ(%)", "ALIYUN/GPU-MEM LIM", "ALIYUN/GPU-MEM LIM(%)",
 				"PodCount (%)",
 			)
 		}
@@ -71,14 +71,14 @@ func PodWrite(data [][]string, resourceType []string, outType bool) {
 		case t == "gpu":
 			header = append(header,
 				"NVIDIA/GPU REQ", "NVIDIA/GPU LIM",
-				"ALIYUN/GPU-MEM REQ", "ALIYUN/GPU-MEM LIM",
+				// "ALIYUN/GPU-MEM REQ", "ALIYUN/GPU-MEM LIM",
 			)
 		default:
 			header = append(header,
 				"CPU USE ", "CPU USE(%)", "CPU REQ", "CPU LIM",
 				"MEM USE", "MEM USE(%)", "MEM REQ", "MEM LIM",
 				"NVIDIA/GPU REQ", "NVIDIA/GPU LIM",
-				"ALIYUN/GPU-MEM REQ", "ALIYUN/GPU-MEM LIM",
+				// "ALIYUN/GPU-MEM REQ", "ALIYUN/GPU-MEM LIM",
 			)
 		}
 	}

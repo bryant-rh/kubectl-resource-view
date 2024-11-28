@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -158,6 +160,10 @@ func (o *ResourcePodOptions) Validate() error {
 }
 
 func (o ResourcePodOptions) RunResourcePod() error {
+	// Create context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
 	var err error
 	labelSelector := labels.Everything()
 	if len(o.LabelSelector) > 0 {
@@ -184,21 +190,12 @@ func (o ResourcePodOptions) RunResourcePod() error {
 	if !metricsAPIAvailable {
 		return errors.New("metrics API not available")
 	}
-	metrics, err := o.Client.GetPodMetricsFromMetricsAPI(o.Namespace, o.ResourceName, o.AllNamespaces, labelSelector, fieldSelector)
+	metrics, err := o.Client.GetPodMetricsFromMetricsAPI(ctx, o.Namespace, o.ResourceName, o.AllNamespaces, labelSelector, fieldSelector)
 	if err != nil {
 		return err
 	}
 
-	// First we check why no metrics have been received.
 	if len(metrics.Items) == 0 {
-		// If the API server query is successful but all the pods are newly created,
-		// the metrics are probably not ready yet, so we return the error here in the first place.
-		// err := verifyEmptyMetrics(o, labelSelector, fieldSelector)
-		// if err != nil {
-		// 	return err
-		// }
-
-		// if we had no errors, be sure we output something.
 		if o.AllNamespaces {
 			fmt.Fprintln(o.ErrOut, "No resources found")
 		} else {
@@ -206,9 +203,8 @@ func (o ResourcePodOptions) RunResourcePod() error {
 		}
 	}
 
-	data, err := o.Client.GetPodResources(metrics.Items, o.Namespace, o.ResourceName, o.AllNamespaces, o.ResourceTypeslice, o.SortBy, labelSelector, fieldSelector)
+	data, err := o.Client.GetPodResources(ctx, metrics.Items, o.Namespace, o.ResourceName, o.AllNamespaces, o.ResourceTypeslice, o.SortBy, labelSelector, fieldSelector)
 	if err != nil {
-
 		return err
 	}
 	writer.PodWrite(data, o.ResourceTypeslice, o.NoFormat)
